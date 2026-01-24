@@ -49,6 +49,48 @@ hostKeys = [ "/etc/secrets/initrd/ssh_host_ed25519_key" ];
     wget
   ];
 
+  # --- 4. VAULTWARDEN ---
+  services.vaultwarden = {
+    enable = true;
+    config = {
+      DOMAIN = "https://rusty-vault.de";
+      SIGNUPS_ALLOWED = false;  # Nach erstem Account auf false setzen!
+      ROCKET_ADDRESS = "127.0.0.1";
+      ROCKET_PORT = 8222;
+      ADMIN_TOKEN = "$argon2id$v=19$m=65540,t=3,p=4$I0fPqJOynHKXxBUj5iur0ZMigOS806LGRgYwpg9euvc$SVRz1fv4YdoOoFYOI72d+UIbZElt9XVF9d6LNomZ2lw";
+    };
+  };
+
+  # --- 5. NGINX REVERSE PROXY ---
+  services.nginx = {
+    enable = true;
+    recommendedGzipSettings = true;
+    recommendedOptimisation = true;
+    recommendedProxySettings = true;
+    recommendedTlsSettings = true;
+
+    virtualHosts."rusty-vault.de" = {
+      enableACME = true;
+      forceSSL = true;
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:8222";
+        proxyWebsockets = true;
+      };
+    };
+  };
+
+  # --- 6. ACME / LET'S ENCRYPT ---
+  security.acme = {
+    acceptTerms = true;
+    defaults.email = "achim.schneider@posteo.de";
+  };
+
+  # --- 7. FIREWALL ---
+  networking.firewall = {
+    enable = true;
+    allowedTCPPorts = [ 22 80 443 ];
+  };
+
   # Diese Version nicht ändern (definiert Kompatibilität)
-  system.stateVersion = "25.05"; 
+  system.stateVersion = "25.05";
 }
