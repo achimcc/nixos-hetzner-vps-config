@@ -212,6 +212,18 @@
 
   networking.hostName = "nixos-server";
 
+  # IPv6-Konfiguration fuer Hetzner
+  networking.interfaces.enp1s0 = {
+    ipv6.addresses = [{
+      address = "2a01:4f8:d0a:27bd::2";
+      prefixLength = 64;
+    }];
+  };
+  networking.defaultGateway6 = {
+    address = "fe80::1";
+    interface = "enp1s0";
+  };
+
   environment.systemPackages = with pkgs; [
     vim
     git
