@@ -17,6 +17,9 @@
     defaultSopsFile = ./secrets/secrets.yaml;
     age.keyFile = "/var/lib/sops-nix/key.txt";
     secrets.smtp_password = {};
+    secrets.miniflux_admin = {
+      owner = "miniflux";
+    };
   };
 
   # ============================================================================
@@ -265,6 +268,22 @@
   };
 
   # ============================================================================
+  # MINIFLUX RSS READER
+  # ============================================================================
+
+  services.miniflux = {
+    enable = true;
+    createDatabaseLocally = true;  # Automatisches PostgreSQL Setup
+    adminCredentialsFile = config.sops.secrets.miniflux_admin.path;
+    config = {
+      LISTEN_ADDR = "127.0.0.1:8080";
+      BASE_URL = "https://rusty-vault.de/miniflux/";
+      CLEANUP_FREQUENCY = "48";  # Stunden zwischen Cleanup
+      POLLING_FREQUENCY = 60;  # Feed-Polling in Minuten
+    };
+  };
+
+  # ============================================================================
   # VAULTWARDEN
   # ============================================================================
 
@@ -365,6 +384,15 @@
       # Syncthing Relay Status
       locations."/relay-status" = {
         proxyPass = "http://127.0.0.1:22070/status";
+        extraConfig = ''
+          proxy_hide_header X-Powered-By;
+          proxy_hide_header Server;
+        '';
+      };
+
+      # Miniflux RSS Reader
+      locations."/miniflux/" = {
+        proxyPass = "http://127.0.0.1:8080/";
         extraConfig = ''
           proxy_hide_header X-Powered-By;
           proxy_hide_header Server;

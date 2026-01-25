@@ -1,0 +1,25 @@
+# .gitignore
+
+# Password files (never commit these!)
+.miniflux-password
+*.password
+*-password.txt
+
+# SOPS Age private keys (never commit these!)
+keys.txt
+age-key.txt
+*.age-key
+
+# Temporary files
+*.tmp
+*.swp
+*~
+
+# Build results
+result
+result-*
+
+# Editor files
+.vscode/
+.idea/
+*.iml
