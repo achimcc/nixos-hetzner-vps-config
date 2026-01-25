@@ -215,7 +215,7 @@
   # IPv6-Konfiguration fuer Hetzner
   networking.interfaces.enp1s0 = {
     ipv6.addresses = [{
-      address = "2a01:4f8:d0a:27bd::2";
+      address = "2a01:4f9:c013:5ee7::1";
       prefixLength = 64;
     }];
   };
