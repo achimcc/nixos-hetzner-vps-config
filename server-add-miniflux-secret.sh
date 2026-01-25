@@ -52,8 +52,9 @@ if command -v sops &> /dev/null; then
 elif [ -x "/run/current-system/sw/bin/sops" ]; then
     SOPS="/run/current-system/sw/bin/sops"
 else
-    echo "❌ Error: sops not found in PATH or /run/current-system/sw/bin/"
-    exit 1
+    # Use nix-shell to get sops
+    echo "SOPS not in PATH, using nix-shell..."
+    SOPS="nix-shell -p sops --run sops"
 fi
 
 echo "Using SOPS: $SOPS"
@@ -64,10 +65,19 @@ TEMP_DECRYPTED=$(mktemp)
 TEMP_UPDATED=$(mktemp)
 
 # Decrypt existing secrets
-if ! "$SOPS" -d "$SECRETS_FILE" > "$TEMP_DECRYPTED"; then
-    echo "❌ Error: Failed to decrypt secrets file"
-    rm -f "$TEMP_DECRYPTED" "$TEMP_UPDATED"
-    exit 1
+if [[ "$SOPS" == *"nix-shell"* ]]; then
+    # Using nix-shell, need to handle differently
+    if ! nix-shell -p sops --run "sops -d '$SECRETS_FILE'" > "$TEMP_DECRYPTED"; then
+        echo "❌ Error: Failed to decrypt secrets file"
+        rm -f "$TEMP_DECRYPTED" "$TEMP_UPDATED"
+        exit 1
+    fi
+else
+    if ! "$SOPS" -d "$SECRETS_FILE" > "$TEMP_DECRYPTED"; then
+        echo "❌ Error: Failed to decrypt secrets file"
+        rm -f "$TEMP_DECRYPTED" "$TEMP_UPDATED"
+        exit 1
+    fi
 fi
 
 echo "✅ Secrets decrypted"
@@ -104,10 +114,19 @@ echo ""
 echo "📋 Step 4: Re-encrypting secrets file..."
 
 # Re-encrypt with sops
-if ! "$SOPS" -e "$TEMP_UPDATED" > "$SECRETS_FILE"; then
-    echo "❌ Error: Failed to encrypt secrets file"
-    rm -f "$TEMP_DECRYPTED" "$TEMP_UPDATED"
-    exit 1
+if [[ "$SOPS" == *"nix-shell"* ]]; then
+    # Using nix-shell, need to handle differently
+    if ! nix-shell -p sops --run "sops -e '$TEMP_UPDATED'" > "$SECRETS_FILE"; then
+        echo "❌ Error: Failed to encrypt secrets file"
+        rm -f "$TEMP_DECRYPTED" "$TEMP_UPDATED"
+        exit 1
+    fi
+else
+    if ! "$SOPS" -e "$TEMP_UPDATED" > "$SECRETS_FILE"; then
+        echo "❌ Error: Failed to encrypt secrets file"
+        rm -f "$TEMP_DECRYPTED" "$TEMP_UPDATED"
+        exit 1
+    fi
 fi
 
 # Cleanup
