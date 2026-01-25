@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   imports =
@@ -19,42 +19,199 @@
     secrets.smtp_password = {};
   };
 
-  # --- 1. BOOTLOADER ---
+  # ============================================================================
+  # SECURITY HARDENING
+  # ============================================================================
+
+  # --- Kernel Hardening ---
+  boot.kernel.sysctl = {
+    # Netzwerk-Hardening
+    "net.ipv4.conf.all.accept_redirects" = 0;
+    "net.ipv4.conf.default.accept_redirects" = 0;
+    "net.ipv4.conf.all.secure_redirects" = 0;
+    "net.ipv4.conf.default.secure_redirects" = 0;
+    "net.ipv6.conf.all.accept_redirects" = 0;
+    "net.ipv6.conf.default.accept_redirects" = 0;
+    "net.ipv4.conf.all.send_redirects" = 0;
+    "net.ipv4.conf.default.send_redirects" = 0;
+    "net.ipv4.conf.all.accept_source_route" = 0;
+    "net.ipv4.conf.default.accept_source_route" = 0;
+    "net.ipv6.conf.all.accept_source_route" = 0;
+    "net.ipv6.conf.default.accept_source_route" = 0;
+    "net.ipv4.conf.all.log_martians" = 1;
+    "net.ipv4.conf.default.log_martians" = 1;
+    "net.ipv4.icmp_echo_ignore_broadcasts" = 1;
+    "net.ipv4.icmp_ignore_bogus_error_responses" = 1;
+    "net.ipv4.conf.all.rp_filter" = 1;
+    "net.ipv4.conf.default.rp_filter" = 1;
+    "net.ipv4.tcp_syncookies" = 1;
+    "net.ipv4.tcp_timestamps" = 0;
+
+    # Speicher-Hardening
+    "kernel.randomize_va_space" = 2;
+    "kernel.kptr_restrict" = 2;
+    "kernel.dmesg_restrict" = 1;
+    "kernel.perf_event_paranoid" = 3;
+    "kernel.yama.ptrace_scope" = 2;
+    "kernel.unprivileged_bpf_disabled" = 1;
+    "net.core.bpf_jit_harden" = 2;
+
+    # Filesystem-Hardening
+    "fs.protected_hardlinks" = 1;
+    "fs.protected_symlinks" = 1;
+    "fs.protected_fifos" = 2;
+    "fs.protected_regular" = 2;
+    "fs.suid_dumpable" = 0;
+  };
+
+  # Kernel-Module Blacklist (ungenutzte/unsichere Module)
+  boot.blacklistedKernelModules = [
+    "dccp" "sctp" "rds" "tipc"  # Ungenutzte Netzwerk-Protokolle
+    "cramfs" "freevxfs" "jffs2" "hfs" "hfsplus" "udf"  # Ungenutzte Dateisysteme
+    "firewire-core" "firewire-ohci" "firewire-sbp2"  # FireWire
+    "thunderbolt"  # Thunderbolt (nicht auf VPS benoetigt)
+  ];
+
+  # --- Automatische Sicherheitsupdates ---
+  system.autoUpgrade = {
+    enable = true;
+    allowReboot = false;  # Manueller Reboot nach Updates
+    dates = "04:00";
+    randomizedDelaySec = "30min";
+  };
+
+  # --- Benutzer-Hardening ---
+  # Separater Admin-Benutzer statt direktem Root-Login
+  users.users.admin = {
+    isNormalUser = true;
+    extraGroups = [ "wheel" ];
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIC7i5Y0mgk0vYZRypv6lbM4AnuY1IrCLKrSwoFbB8Y2C achim@hetzner-vps"
+    ];
+  };
+
+  # Root SSH-Keys behalten fuer Notfall/initrd
+  users.users.root.openssh.authorizedKeys.keys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIC7i5Y0mgk0vYZRypv6lbM4AnuY1IrCLKrSwoFbB8Y2C achim@hetzner-vps"
+  ];
+
+  # Sudo-Konfiguration
+  security.sudo = {
+    enable = true;
+    wheelNeedsPassword = false;  # Fuer Key-only SSH sinnvoll
+    execWheelOnly = true;
+  };
+
+  # Passwort-Hashes schuetzen
+  users.mutableUsers = false;
+
+  # ============================================================================
+  # SSH HARDENING
+  # ============================================================================
+
+  services.openssh = {
+    enable = true;
+    openFirewall = true;
+
+    settings = {
+      # Nur Key-Authentifizierung
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
+      PermitRootLogin = "prohibit-password";
+
+      # Starke Krypto
+      KexAlgorithms = [
+        "curve25519-sha256"
+        "curve25519-sha256@libssh.org"
+        "diffie-hellman-group16-sha512"
+        "diffie-hellman-group18-sha512"
+      ];
+      Ciphers = [
+        "chacha20-poly1305@openssh.com"
+        "aes256-gcm@openssh.com"
+        "aes128-gcm@openssh.com"
+      ];
+      Macs = [
+        "hmac-sha2-512-etm@openssh.com"
+        "hmac-sha2-256-etm@openssh.com"
+      ];
+
+      # Weitere Haertung
+      X11Forwarding = false;
+      AllowAgentForwarding = false;
+      AllowTcpForwarding = false;
+      PermitTunnel = "no";
+      MaxAuthTries = 3;
+      LoginGraceTime = 30;
+      ClientAliveInterval = 300;
+      ClientAliveCountMax = 2;
+    };
+
+    # Nur sichere Host-Key-Typen
+    hostKeys = [
+      { path = "/etc/ssh/ssh_host_ed25519_key"; type = "ed25519"; }
+      { path = "/etc/ssh/ssh_host_rsa_key"; type = "rsa"; bits = 4096; }
+    ];
+  };
+
+  # --- Fail2ban ---
+  services.fail2ban = {
+    enable = true;
+    maxretry = 5;
+    bantime = "1h";
+    bantime-increment = {
+      enable = true;
+      maxtime = "48h";
+      factor = "4";
+    };
+    jails = {
+      sshd = {
+        settings = {
+          enabled = true;
+          filter = "sshd";
+          maxretry = 3;
+          findtime = "10m";
+          bantime = "1h";
+        };
+      };
+      nginx-botsearch = {
+        settings = {
+          enabled = true;
+          filter = "nginx-botsearch";
+          maxretry = 5;
+          findtime = "10m";
+          bantime = "1h";
+        };
+      };
+    };
+  };
+
+  # ============================================================================
+  # BOOTLOADER
+  # ============================================================================
+
   boot.loader.grub.enable = true;
   boot.loader.grub.device = "/dev/sda";
-  # Falls es Probleme gibt, erzwinge die Installation:
-  # boot.loader.grub.forceInstall = true;
 
-  # --- 2. REMOTE UNLOCK (SSH beim Booten) ---
+  # --- REMOTE UNLOCK (SSH beim Booten) ---
   boot.initrd.network = {
     enable = true;
     ssh = {
       enable = true;
       port = 22;
-      # !!! WICHTIG: Füge hier deinen echten Public Key ein !!!
       authorizedKeys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIC7i5Y0mgk0vYZRypv6lbM4AnuY1IrCLKrSwoFbB8Y2C achim@hetzner-vps" ];
-
-      # Habe ich auskommentiert, da diese Datei bei der Installation oft noch fehlt.
-      # NixOS generiert temporäre Keys für den Boot-Vorgang.
-      # hostKeys = [ "/etc/secrets/initrd/ssh_host_ed25519_key" ];
-hostKeys = [ "/etc/secrets/initrd/ssh_host_ed25519_key" ];
+      hostKeys = [ "/etc/secrets/initrd/ssh_host_ed25519_key" ];
     };
   };
 
-  # Treiber für Hetzner Netzwerkkarte laden, damit SSH beim Booten geht
   boot.initrd.availableKernelModules = [ "virtio_net" "virtio_pci" ];
 
-  # --- 3. SYSTEM EINSTELLUNGEN ---
-  networking.hostName = "nixos-server"; # Du kannst den Namen ändern
+  # ============================================================================
+  # SYSTEM SETTINGS
+  # ============================================================================
 
-  # SSH für das laufende System
-  services.openssh.enable = true;
-  users.users.root.openssh.authorizedKeys.keys = [
-    # !!! WICHTIG: Auch hier deinen echten Public Key einfügen !!!
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIC7i5Y0mgk0vYZRypv6lbM4AnuY1IrCLKrSwoFbB8Y2C achim@hetzner-vps"
-  ];
+  networking.hostName = "nixos-server";
 
-  # Nützliche Standard-Pakete (damit du Editoren hast)
   environment.systemPackages = with pkgs; [
     vim
     git
@@ -62,13 +219,16 @@ hostKeys = [ "/etc/secrets/initrd/ssh_host_ed25519_key" ];
     wget
   ];
 
-  # --- 4. VAULTWARDEN ---
+  # ============================================================================
+  # VAULTWARDEN
+  # ============================================================================
+
   services.vaultwarden = {
     enable = true;
     environmentFile = config.sops.secrets.smtp_password.path;
     config = {
       DOMAIN = "https://rusty-vault.de";
-      SIGNUPS_ALLOWED = false;  # Nach erstem Account auf false setzen!
+      SIGNUPS_ALLOWED = false;
       ROCKET_ADDRESS = "127.0.0.1";
       ROCKET_PORT = 8222;
       ADMIN_TOKEN = "$argon2id$v=19$m=65540,t=3,p=4$I0fPqJOynHKXxBUj5iur0ZMigOS806LGRgYwpg9euvc$SVRz1fv4YdoOoFYOI72d+UIbZElt9XVF9d6LNomZ2lw";
@@ -79,11 +239,19 @@ hostKeys = [ "/etc/secrets/initrd/ssh_host_ed25519_key" ];
       SMTP_SECURITY = "starttls";
       SMTP_FROM = "achim.schneider@posteo.de";
       SMTP_USERNAME = "achim.schneider@posteo.de";
-      # SMTP_PASSWORD kommt aus environmentFile
+
+      # Zusaetzliche Sicherheit
+      SENDS_ALLOWED = true;
+      EMERGENCY_ACCESS_ALLOWED = true;
+      ORG_CREATION_USERS = "none";  # Nur Admins koennen Organisationen erstellen
+      SHOW_PASSWORD_HINT = false;
     };
   };
 
-  # --- 5. NGINX REVERSE PROXY ---
+  # ============================================================================
+  # NGINX REVERSE PROXY (HARDENED)
+  # ============================================================================
+
   services.nginx = {
     enable = true;
     recommendedGzipSettings = true;
@@ -91,28 +259,182 @@ hostKeys = [ "/etc/secrets/initrd/ssh_host_ed25519_key" ];
     recommendedProxySettings = true;
     recommendedTlsSettings = true;
 
+    # Globale Sicherheitseinstellungen
+    appendHttpConfig = ''
+      # Rate Limiting
+      limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s;
+      limit_conn_zone $binary_remote_addr zone=addr:10m;
+
+      # Verstecke Server-Version
+      server_tokens off;
+
+      # SSL Session Tickets deaktivieren (bessere Forward Secrecy)
+      ssl_session_tickets off;
+    '';
+
     virtualHosts."rusty-vault.de" = {
       enableACME = true;
       forceSSL = true;
+
+      # Security Headers
+      extraConfig = ''
+        # Rate Limiting anwenden
+        limit_req zone=general burst=20 nodelay;
+        limit_conn addr 10;
+
+        # Security Headers
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-XSS-Protection "1; mode=block" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()" always;
+
+        # HSTS (2 Jahre)
+        add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+      '';
+
       locations."/" = {
         proxyPass = "http://127.0.0.1:8222";
         proxyWebsockets = true;
+        extraConfig = ''
+          # Proxy-spezifische Sicherheit
+          proxy_hide_header X-Powered-By;
+          proxy_hide_header Server;
+        '';
+      };
+
+      # Admin-Panel zusaetzlich schuetzen (optional: IP-Whitelist)
+      locations."/admin" = {
+        proxyPass = "http://127.0.0.1:8222";
+        extraConfig = ''
+          # Strengeres Rate Limiting fuer Admin
+          limit_req zone=general burst=5 nodelay;
+
+          proxy_hide_header X-Powered-By;
+          proxy_hide_header Server;
+        '';
       };
     };
   };
 
-  # --- 6. ACME / LET'S ENCRYPT ---
+  # ============================================================================
+  # ACME / LET'S ENCRYPT
+  # ============================================================================
+
   security.acme = {
     acceptTerms = true;
-    defaults.email = "achim.schneider@posteo.de";
+    defaults = {
+      email = "achim.schneider@posteo.de";
+      # ECDSA-Zertifikate (moderner, schneller)
+      keyType = "ec384";
+    };
   };
 
-  # --- 7. FIREWALL ---
+  # ============================================================================
+  # FIREWALL (HARDENED)
+  # ============================================================================
+
   networking.firewall = {
     enable = true;
     allowedTCPPorts = [ 22 80 443 ];
+
+    # ICMP Rate Limiting
+    extraCommands = ''
+      # Schutz gegen SYN-Flood
+      iptables -A INPUT -p tcp --syn -m limit --limit 1/s --limit-burst 3 -j ACCEPT
+
+      # Ping Rate Limiting
+      iptables -A INPUT -p icmp --icmp-type echo-request -m limit --limit 1/s --limit-burst 4 -j ACCEPT
+    '';
+
+    # Regeln beim Stoppen entfernen
+    extraStopCommands = ''
+      iptables -D INPUT -p tcp --syn -m limit --limit 1/s --limit-burst 3 -j ACCEPT 2>/dev/null || true
+      iptables -D INPUT -p icmp --icmp-type echo-request -m limit --limit 1/s --limit-burst 4 -j ACCEPT 2>/dev/null || true
+    '';
+
+    # Logging fuer abgelehnte Pakete
+    logRefusedConnections = true;
+    logRefusedPackets = true;
   };
 
-  # Diese Version nicht ändern (definiert Kompatibilität)
+  # ============================================================================
+  # AUDIT & LOGGING
+  # ============================================================================
+
+  # Auditd fuer Security-Monitoring
+  security.auditd.enable = true;
+  security.audit = {
+    enable = true;
+    rules = [
+      # Login-Versuche ueberwachen
+      "-w /var/log/faillog -p wa -k logins"
+      "-w /var/log/lastlog -p wa -k logins"
+
+      # Sudo-Nutzung ueberwachen
+      "-w /etc/sudoers -p wa -k sudoers"
+      "-w /etc/sudoers.d -p wa -k sudoers"
+
+      # SSH-Konfiguration ueberwachen
+      "-w /etc/ssh/sshd_config -p wa -k sshd"
+
+      # Systemd-Units ueberwachen
+      "-w /etc/systemd -p wa -k systemd"
+    ];
+  };
+
+  # Journald-Konfiguration
+  services.journald = {
+    extraConfig = ''
+      Storage=persistent
+      Compress=yes
+      SystemMaxUse=500M
+      MaxRetentionSec=1month
+    '';
+  };
+
+  # ============================================================================
+  # ZUSAETZLICHE SICHERHEIT
+  # ============================================================================
+
+  # AppArmor aktivieren
+  security.apparmor.enable = true;
+
+  # Polkit (Rechteverwaltung)
+  security.polkit.enable = true;
+
+  # Coredumps deaktivieren (Datenleck-Risiko)
+  systemd.coredump.enable = false;
+
+  # DNS-over-TLS mit systemd-resolved
+  services.resolved = {
+    enable = true;
+    dnssec = "allow-downgrade";
+    extraConfig = ''
+      DNSOverTLS=opportunistic
+    '';
+    fallbackDns = [
+      "9.9.9.9#dns.quad9.net"
+      "149.112.112.112#dns.quad9.net"
+    ];
+  };
+
+  # Chrony statt ntpd (sicherer)
+  services.chrony = {
+    enable = true;
+    servers = [
+      "0.de.pool.ntp.org"
+      "1.de.pool.ntp.org"
+      "2.de.pool.ntp.org"
+    ];
+  };
+
+  # NTP deaktivieren (Chrony uebernimmt)
+  services.timesyncd.enable = false;
+
+  # Cron deaktivieren (systemd-timer verwenden)
+  services.cron.enable = false;
+
+  # Diese Version nicht aendern (definiert Kompatibilitaet)
   system.stateVersion = "25.05";
 }
