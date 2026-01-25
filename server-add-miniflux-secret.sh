@@ -45,12 +45,26 @@ if [ ! -f "$SECRETS_FILE" ]; then
     exit 1
 fi
 
-echo "📋 Step 1: Decrypting secrets file..."
+echo "📋 Step 1: Finding SOPS binary..."
+# Find sops in the system
+if command -v sops &> /dev/null; then
+    SOPS="sops"
+elif [ -x "/run/current-system/sw/bin/sops" ]; then
+    SOPS="/run/current-system/sw/bin/sops"
+else
+    echo "❌ Error: sops not found in PATH or /run/current-system/sw/bin/"
+    exit 1
+fi
+
+echo "Using SOPS: $SOPS"
+echo ""
+
+echo "📋 Step 2: Decrypting secrets file..."
 TEMP_DECRYPTED=$(mktemp)
 TEMP_UPDATED=$(mktemp)
 
 # Decrypt existing secrets
-if ! sops -d "$SECRETS_FILE" > "$TEMP_DECRYPTED"; then
+if ! "$SOPS" -d "$SECRETS_FILE" > "$TEMP_DECRYPTED"; then
     echo "❌ Error: Failed to decrypt secrets file"
     rm -f "$TEMP_DECRYPTED" "$TEMP_UPDATED"
     exit 1
@@ -63,7 +77,7 @@ echo "Current secrets (decrypted):"
 cat "$TEMP_DECRYPTED"
 echo ""
 
-echo "📋 Step 2: Adding miniflux_admin secret..."
+echo "📋 Step 3: Adding miniflux_admin secret..."
 
 # Check if miniflux_admin already exists
 if grep -q "^miniflux_admin:" "$TEMP_DECRYPTED"; then
@@ -87,10 +101,10 @@ echo "Updated secrets (before encryption):"
 cat "$TEMP_UPDATED"
 echo ""
 
-echo "📋 Step 3: Re-encrypting secrets file..."
+echo "📋 Step 4: Re-encrypting secrets file..."
 
 # Re-encrypt with sops
-if ! sops -e "$TEMP_UPDATED" > "$SECRETS_FILE"; then
+if ! "$SOPS" -e "$TEMP_UPDATED" > "$SECRETS_FILE"; then
     echo "❌ Error: Failed to encrypt secrets file"
     rm -f "$TEMP_DECRYPTED" "$TEMP_UPDATED"
     exit 1
