@@ -11,6 +11,10 @@ set -euo pipefail
 
 SECRETS_FILE="/etc/nixos/secrets/secrets.yaml"
 MINIFLUX_ADMIN_USER="admin"
+SOPS_AGE_KEY_FILE="/var/lib/sops-nix/key.txt"
+
+# Export Age key location for SOPS
+export SOPS_AGE_KEY_FILE
 
 echo "=========================================="
 echo "Adding Miniflux Admin Secret to SOPS"
