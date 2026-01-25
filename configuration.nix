@@ -235,9 +235,9 @@
     # Pool-Einstellungen (oeffentlich im Syncthing-Pool registrieren)
     pools = [ "https://relays.syncthing.net/endpoint" ];
 
-    # Bandbreiten-Limits (optional, 0 = unbegrenzt)
-    globalRateBps = 0;
-    perSessionRateBps = 0;
+    # Bandbreiten-Limits (null = unbegrenzt)
+    globalRateBps = null;
+    perSessionRateBps = null;
 
     # Identifikation
     providedBy = "rusty-vault.de";
