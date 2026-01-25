@@ -128,16 +128,16 @@ fi
 
 echo "Using Age public key: $AGE_PUBLIC_KEY"
 
-# Re-encrypt with sops using the Age public key
+# Re-encrypt with sops using the Age public key directly (bypassing .sops.yaml)
 if [[ "$SOPS" == *"nix-shell"* ]]; then
-    # Using nix-shell, need to handle differently
-    if ! nix-shell -p sops --run "sops -e --age '$AGE_PUBLIC_KEY' '$TEMP_UPDATED'" > "$SECRETS_FILE"; then
+    # Using nix-shell
+    if ! nix-shell -p sops --run "sops --encrypt --age '$AGE_PUBLIC_KEY' '$TEMP_UPDATED'" > "$SECRETS_FILE"; then
         echo "❌ Error: Failed to encrypt secrets file"
         rm -f "$TEMP_DECRYPTED" "$TEMP_UPDATED"
         exit 1
     fi
 else
-    if ! "$SOPS" -e --age "$AGE_PUBLIC_KEY" "$TEMP_UPDATED" > "$SECRETS_FILE"; then
+    if ! "$SOPS" --encrypt --age "$AGE_PUBLIC_KEY" "$TEMP_UPDATED" > "$SECRETS_FILE"; then
         echo "❌ Error: Failed to encrypt secrets file"
         rm -f "$TEMP_DECRYPTED" "$TEMP_UPDATED"
         exit 1
