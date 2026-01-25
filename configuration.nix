@@ -309,6 +309,14 @@
       enableACME = true;
       forceSSL = true;
 
+      # ACME Challenge ohne Rate-Limiting
+      locations."/.well-known/acme-challenge" = {
+        root = "/var/lib/acme/acme-challenge";
+        extraConfig = ''
+          auth_basic off;
+        '';
+      };
+
       # Security Headers
       extraConfig = ''
         # Rate Limiting anwenden
