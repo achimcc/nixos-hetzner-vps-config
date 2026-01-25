@@ -1,51 +1,54 @@
 # NixOS Hetzner VPS - Vaultwarden Server
 
-Gehärtete NixOS-Konfiguration für einen Vaultwarden Password Manager auf einem Hetzner VPS.
+Hardened NixOS configuration for a self-hosted Vaultwarden password manager on a Hetzner VPS.
 
 ## Features
 
-- **Vaultwarden** - Selbst-gehosteter Bitwarden-kompatibler Password Manager
-- **NGINX** - Reverse Proxy mit Let's Encrypt TLS
-- **SOPS-nix** - Verschlüsselte Secrets mit Age
-- **LUKS** - Festplattenverschlüsselung mit Remote-Unlock via SSH
-- **Security Hardening** - Umfassende Systemhärtung
+- **Vaultwarden** - Self-hosted Bitwarden-compatible password manager
+- **Syncthing Relay** - Public relay server for Syncthing file synchronization
+- **NGINX** - Reverse proxy with Let's Encrypt TLS
+- **SOPS-nix** - Encrypted secrets using Age encryption
+- **LUKS** - Full disk encryption with remote SSH unlock
+- **Security Hardening** - Comprehensive system hardening
 
-## Komponenten
+## Components
 
-| Dienst | Port | Beschreibung |
-|--------|------|--------------|
-| Vaultwarden | 8222 (intern) | Password Manager |
+| Service | Port | Description |
+|---------|------|-------------|
+| Vaultwarden | 8222 (internal) | Password Manager |
+| Syncthing Relay | 22067 | Relay server for Syncthing clients |
+| Syncthing Status | 22070 (internal) | Relay status API |
 | NGINX | 80, 443 | Reverse Proxy + TLS |
 | SSH | 22 | Administration |
 
-## Voraussetzungen
+## Prerequisites
 
-- Hetzner VPS mit NixOS
-- Domain mit DNS auf Server-IP
-- Lokal: `sops`, `age` installiert
+- Hetzner VPS running NixOS
+- Domain with DNS pointing to server IP
+- Local tools: `sops`, `age`
 
-## Struktur
+## Structure
 
 ```
 .
-├── configuration.nix      # Haupt-Konfiguration
+├── configuration.nix          # Main configuration
 ├── hardware-configuration.nix
 ├── secrets/
-│   └── secrets.yaml       # Verschlüsselte Credentials (SOPS)
-├── .sops.yaml             # SOPS-Konfiguration
+│   └── secrets.yaml           # Encrypted credentials (SOPS)
+├── .sops.yaml                 # SOPS configuration
 └── README.md
 ```
 
 ## Installation
 
-### 1. Repository klonen
+### 1. Clone Repository
 
 ```bash
 git clone <repo-url>
 cd nixos-hetzner-vps-config
 ```
 
-### 2. Age-Schlüssel auf Server erstellen
+### 2. Create Age Key on Server
 
 ```bash
 ssh root@<server> "mkdir -p /var/lib/sops-nix && \
@@ -54,11 +57,11 @@ ssh root@<server> "mkdir -p /var/lib/sops-nix && \
   cat /var/lib/sops-nix/key.txt"
 ```
 
-Den Public Key (`age1...`) notieren.
+Note the public key (`age1...`).
 
-### 3. SOPS konfigurieren
+### 3. Configure SOPS
 
-`.sops.yaml` mit dem Public Key aktualisieren:
+Update `.sops.yaml` with the public key:
 
 ```yaml
 keys:
@@ -70,35 +73,35 @@ creation_rules:
           - *server
 ```
 
-### 4. Secrets erstellen
+### 4. Create Secrets
 
 ```bash
-# Plaintext erstellen
+# Create plaintext
 cat > secrets/secrets.yaml << 'EOF'
-smtp_password: 'SMTP_PASSWORD=dein-passwort-hier'
+smtp_password: 'SMTP_PASSWORD=your-password-here'
 EOF
 
-# Verschlüsseln
+# Encrypt
 sops -e -i secrets/secrets.yaml
 ```
 
-**Hinweis:** Backslashes im Passwort müssen verdoppelt werden (`\` → `\\`).
+**Note:** Backslashes in passwords must be doubled (`\` → `\\`).
 
-### 5. Konfiguration anpassen
+### 5. Customize Configuration
 
-In `configuration.nix` anpassen:
+Edit `configuration.nix`:
 - Domain (`rusty-vault.de`)
-- E-Mail-Adressen
-- SSH Public Keys
-- SMTP-Einstellungen
+- Email addresses
+- SSH public keys
+- SMTP settings
 
-### 6. Deployment
+### 6. Deploy
 
 ```bash
-# Dateien auf Server kopieren
+# Copy files to server
 scp -r configuration.nix secrets/ .sops.yaml root@<server>:/etc/nixos/
 
-# Konfiguration aktivieren
+# Activate configuration
 ssh root@<server> "nixos-rebuild switch"
 ```
 
@@ -107,73 +110,103 @@ ssh root@<server> "nixos-rebuild switch"
 ### Kernel
 
 - ASLR (Address Space Layout Randomization)
-- Kernel-Pointer versteckt (`kptr_restrict=2`)
-- ptrace-Schutz (`yama.ptrace_scope=2`)
-- BPF JIT Hardening
-- Ungenutzte Kernel-Module blockiert
+- Kernel pointers hidden (`kptr_restrict=2`)
+- ptrace protection (`yama.ptrace_scope=2`)
+- BPF JIT hardening
+- Unused kernel modules blacklisted
 
-### Netzwerk
+### Network
 
-- ICMP/IP-Redirects deaktiviert
-- Source-Routing blockiert
-- SYN-Cookies aktiviert
-- Reverse-Path-Filtering
-- TCP-Timestamps deaktiviert
+- ICMP/IP redirects disabled
+- Source routing blocked
+- SYN cookies enabled
+- Reverse path filtering
+- TCP timestamps disabled
 
 ### SSH
 
-- Nur Key-Authentifizierung
-- Starke Kryptografie (Curve25519, ChaCha20-Poly1305)
-- X11/Agent/TCP-Forwarding deaktiviert
+- Key-only authentication
+- Strong cryptography (Curve25519, ChaCha20-Poly1305)
+- X11/Agent/TCP forwarding disabled
 - MaxAuthTries=3
 
 ### Firewall
 
-- Nur Ports 22, 80, 443 offen
-- SYN-Flood-Schutz
-- ICMP Rate-Limiting
-- Logging für abgelehnte Verbindungen
+- Only ports 22, 80, 443 open
+- SYN flood protection
+- ICMP rate limiting
+- Logging for refused connections
 
 ### NGINX
 
-- Security Headers (HSTS, X-Frame-Options, etc.)
-- Rate-Limiting (10 req/s)
-- Server-Version versteckt
-- TLS 1.2+ mit starken Cipher-Suites
+- Security headers (HSTS, X-Frame-Options, etc.)
+- Rate limiting (10 req/s)
+- Server version hidden
+- TLS 1.2+ with strong cipher suites
 
-### Zusätzlich
+### Additional
 
-- **Fail2ban** - Brute-Force-Schutz
+- **Fail2ban** - Brute-force protection
 - **AppArmor** - Mandatory Access Control
-- **Auditd** - Security-Event-Logging
-- **DNS-over-TLS** - Verschlüsselte DNS-Anfragen (Quad9)
-- **Chrony** - Sichere Zeitsynchronisation
-- **Auto-Updates** - Tägliche Sicherheitsupdates
+- **Auditd** - Security event logging
+- **DNS-over-TLS** - Encrypted DNS queries (Quad9)
+- **Chrony** - Secure time synchronization
+- **Auto-updates** - Daily security updates
 
-## Benutzer
+## Users
 
-| User | Zweck |
-|------|-------|
-| `root` | Notfall/LUKS-Unlock (SSH-Key) |
-| `admin` | Tägliche Administration (sudo) |
+| User | Purpose |
+|------|---------|
+| `root` | Emergency/LUKS unlock (SSH key) |
+| `admin` | Daily administration (sudo) |
 
 Login:
 ```bash
 ssh admin@<server>
-sudo -i  # Root-Shell
+sudo -i  # Root shell
 ```
 
-## Wartung
+## Syncthing Relay
+
+The server runs a public Syncthing relay that helps Syncthing clients connect when direct connections aren't possible.
+
+### Status
+
+Check relay status:
+```bash
+# Via NGINX (HTTPS)
+curl https://rusty-vault.de/relay-status
+
+# Direct on server
+curl http://localhost:22070/status
+```
+
+### Configuration
+
+The relay is registered in the global Syncthing relay pool. Clients will automatically discover and use it.
+
+Current settings:
+- **Port**: 22067
+- **Provider**: rusty-vault.de
+- **Rate Limit**: Unlimited
+
+### Logs
+
+```bash
+journalctl -u syncthing-relay -f
+```
+
+## Maintenance
 
 ### Updates
 
-Automatische Updates sind aktiviert (04:00 Uhr). Manuell:
+Automatic updates are enabled (04:00 daily). Manual update:
 
 ```bash
 ssh root@<server> "nixos-rebuild switch --upgrade"
 ```
 
-### Logs prüfen
+### Check Logs
 
 ```bash
 # Vaultwarden
@@ -182,64 +215,64 @@ journalctl -u vaultwarden -f
 # Fail2ban
 fail2ban-client status sshd
 
-# Audit-Log
+# Audit log
 ausearch -k logins
 ```
 
-### Secrets rotieren
+### Rotate Secrets
 
 ```bash
-# Lokal bearbeiten (benötigt Server-Key oder eigenen Key)
+# Edit locally (requires server key or your own key)
 sops secrets/secrets.yaml
 
-# Auf Server deployen
+# Deploy to server
 scp secrets/secrets.yaml root@<server>:/etc/nixos/secrets/
 ssh root@<server> "nixos-rebuild switch"
 ```
 
 ## Troubleshooting
 
-### SMTP funktioniert nicht
+### SMTP Not Working
 
 ```bash
-# Passwort prüfen
+# Check password
 ssh root@<server> "cat /run/secrets/smtp_password"
 
-# Vaultwarden-Logs
+# Vaultwarden logs
 journalctl -u vaultwarden | grep -i smtp
 ```
 
-### SSH-Zugang verloren
+### SSH Access Lost
 
-1. Hetzner Rescue-System booten
-2. LUKS-Partition entsperren
-3. Konfiguration reparieren
+1. Boot Hetzner rescue system
+2. Unlock LUKS partition
+3. Repair configuration
 
-### ACME/TLS-Fehler
+### ACME/TLS Errors
 
 ```bash
-# Zertifikat-Status
+# Certificate status
 systemctl status acme-rusty-vault.de
 
-# Manuell erneuern
+# Manual renewal
 systemctl start acme-rusty-vault.de
 ```
 
 ## Backup
 
-Wichtige Daten:
-- `/var/lib/vaultwarden/` - Vaultwarden-Datenbank
-- `/var/lib/sops-nix/key.txt` - Age Private Key
-- `/etc/secrets/initrd/` - LUKS-Unlock SSH-Keys
+Important data:
+- `/var/lib/vaultwarden/` - Vaultwarden database
+- `/var/lib/sops-nix/key.txt` - Age private key
+- `/etc/secrets/initrd/` - LUKS unlock SSH keys
 
 ```bash
-# Backup erstellen
+# Create backup
 ssh root@<server> "tar -czf /tmp/backup.tar.gz \
   /var/lib/vaultwarden \
   /var/lib/sops-nix/key.txt"
 scp root@<server>:/tmp/backup.tar.gz ./
 ```
 
-## Lizenz
+## License
 
 MIT

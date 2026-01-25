@@ -220,6 +220,39 @@
   ];
 
   # ============================================================================
+  # SYNCTHING RELAY SERVER
+  # ============================================================================
+
+  services.syncthing.relay = {
+    enable = true;
+
+    # Relay-Einstellungen
+    listenAddress = "0.0.0.0";
+    port = 22067;
+    statusListenAddress = "127.0.0.1";
+    statusPort = 22070;
+
+    # Pool-Einstellungen (oeffentlich im Syncthing-Pool registrieren)
+    pools = [ "https://relays.syncthing.net/endpoint" ];
+
+    # Bandbreiten-Limits (optional, 0 = unbegrenzt)
+    globalRateBps = 0;
+    perSessionRateBps = 0;
+
+    # Identifikation
+    providedBy = "rusty-vault.de";
+  };
+
+  # ============================================================================
+  # VEILID NODE
+  # ============================================================================
+
+  services.veilid = {
+    enable = true;
+    openFirewall = true;  # Oeffnet Port 5150 TCP/UDP
+  };
+
+  # ============================================================================
   # VAULTWARDEN
   # ============================================================================
 
@@ -314,6 +347,15 @@
           proxy_hide_header Server;
         '';
       };
+
+      # Syncthing Relay Status
+      locations."/relay-status" = {
+        proxyPass = "http://127.0.0.1:22070/status";
+        extraConfig = ''
+          proxy_hide_header X-Powered-By;
+          proxy_hide_header Server;
+        '';
+      };
     };
   };
 
@@ -336,7 +378,12 @@
 
   networking.firewall = {
     enable = true;
-    allowedTCPPorts = [ 22 80 443 ];
+    allowedTCPPorts = [
+      22      # SSH
+      80      # HTTP
+      443     # HTTPS
+      22067   # Syncthing Relay
+    ];
 
     # ICMP Rate Limiting
     extraCommands = ''
