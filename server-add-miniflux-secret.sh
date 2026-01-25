@@ -117,16 +117,27 @@ echo ""
 
 echo "📋 Step 4: Re-encrypting secrets file..."
 
-# Re-encrypt with sops
+# Get the Age public key from the private key
+AGE_PUBLIC_KEY=$(grep "# public key:" "$SOPS_AGE_KEY_FILE" | awk '{print $4}')
+
+if [ -z "$AGE_PUBLIC_KEY" ]; then
+    echo "❌ Error: Could not extract Age public key from $SOPS_AGE_KEY_FILE"
+    rm -f "$TEMP_DECRYPTED" "$TEMP_UPDATED"
+    exit 1
+fi
+
+echo "Using Age public key: $AGE_PUBLIC_KEY"
+
+# Re-encrypt with sops using the Age public key
 if [[ "$SOPS" == *"nix-shell"* ]]; then
     # Using nix-shell, need to handle differently
-    if ! nix-shell -p sops --run "sops -e '$TEMP_UPDATED'" > "$SECRETS_FILE"; then
+    if ! nix-shell -p sops --run "sops -e --age '$AGE_PUBLIC_KEY' '$TEMP_UPDATED'" > "$SECRETS_FILE"; then
         echo "❌ Error: Failed to encrypt secrets file"
         rm -f "$TEMP_DECRYPTED" "$TEMP_UPDATED"
         exit 1
     fi
 else
-    if ! "$SOPS" -e "$TEMP_UPDATED" > "$SECRETS_FILE"; then
+    if ! "$SOPS" -e --age "$AGE_PUBLIC_KEY" "$TEMP_UPDATED" > "$SECRETS_FILE"; then
         echo "❌ Error: Failed to encrypt secrets file"
         rm -f "$TEMP_DECRYPTED" "$TEMP_UPDATED"
         exit 1
