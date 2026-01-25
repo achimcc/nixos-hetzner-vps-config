@@ -297,9 +297,6 @@
       # Rate Limiting
       limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s;
       limit_conn_zone $binary_remote_addr zone=addr:10m;
-
-      # SSL Session Tickets deaktivieren (bessere Forward Secrecy)
-      ssl_session_tickets off;
     '';
 
     virtualHosts."rusty-vault.de" = {
