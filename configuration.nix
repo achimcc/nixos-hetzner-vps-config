@@ -18,7 +18,9 @@
     age.keyFile = "/var/lib/sops-nix/key.txt";
     secrets.smtp_password = {};
     secrets.miniflux_admin = {
-      owner = "miniflux";
+      # Der miniflux user wird automatisch vom Service erstellt
+      # Wir setzen owner/group manuell um das Problem zu umgehen
+      mode = "0400";
     };
   };
 
