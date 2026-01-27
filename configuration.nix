@@ -16,10 +16,13 @@
   sops = {
     defaultSopsFile = ./secrets/secrets.yaml;
     age.keyFile = "/var/lib/sops-nix/key.txt";
-    secrets.smtp_password = {};
     secrets.miniflux_admin = {
       # Der miniflux user wird automatisch vom Service erstellt
       # Wir setzen owner/group manuell um das Problem zu umgehen
+      mode = "0400";
+    };
+    secrets.vaultwarden_env = {
+      sopsFile = ./secrets/vaultwarden.yaml;
       mode = "0400";
     };
   };
@@ -291,13 +294,13 @@
 
   services.vaultwarden = {
     enable = true;
-    environmentFile = config.sops.secrets.smtp_password.path;
+    environmentFile = config.sops.secrets.vaultwarden_env.path;
     config = {
       DOMAIN = "https://rusty-vault.de";
       SIGNUPS_ALLOWED = false;
       ROCKET_ADDRESS = "127.0.0.1";
       ROCKET_PORT = 8222;
-      ADMIN_TOKEN = "$argon2id$v=19$m=65540,t=3,p=4$I0fPqJOynHKXxBUj5iur0ZMigOS806LGRgYwpg9euvc$SVRz1fv4YdoOoFYOI72d+UIbZElt9XVF9d6LNomZ2lw";
+      # ADMIN_TOKEN kommt aus environmentFile (sops-verschluesselt)
 
       # SMTP fuer Posteo
       SMTP_HOST = "posteo.de";
@@ -305,6 +308,7 @@
       SMTP_SECURITY = "starttls";
       SMTP_FROM = "achim.schneider@posteo.de";
       SMTP_USERNAME = "achim.schneider@posteo.de";
+      # SMTP_PASSWORD kommt aus environmentFile (sops-verschluesselt)
 
       # Zusaetzliche Sicherheit
       SENDS_ALLOWED = true;
