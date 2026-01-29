@@ -517,9 +517,14 @@
         proxyPass = "http://127.0.0.1:3333";
         proxyWebsockets = true;
         extraConfig = ''
-          proxy_set_header Accept-Encoding "";
           proxy_hide_header X-Powered-By;
           proxy_hide_header Server;
+
+          # Ghostfolio liefert vorab-komprimierte Antworten.
+          # Nginx muss diese dekomprimieren, damit gzip_proxied
+          # sie sauber neu komprimieren kann.
+          gunzip on;
+          proxy_set_header Accept-Encoding "gzip";
         '';
       };
     };
