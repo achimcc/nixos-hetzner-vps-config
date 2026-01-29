@@ -502,9 +502,6 @@
       forceSSL = true;
 
       extraConfig = ''
-        limit_req zone=general burst=20 nodelay;
-        limit_conn addr 10;
-
         add_header X-Frame-Options "SAMEORIGIN" always;
         add_header X-Content-Type-Options "nosniff" always;
         add_header X-XSS-Protection "1; mode=block" always;
@@ -517,7 +514,6 @@
         proxyPass = "http://127.0.0.1:3333";
         proxyWebsockets = true;
         extraConfig = ''
-          gzip off;
           proxy_hide_header X-Powered-By;
           proxy_hide_header Server;
         '';
