@@ -25,6 +25,10 @@
       sopsFile = ./secrets/vaultwarden.yaml;
       mode = "0400";
     };
+    secrets.ghostfolio_env = {
+      sopsFile = ./secrets/ghostfolio.yaml;
+      mode = "0400";
+    };
   };
 
   # ============================================================================
@@ -319,6 +323,93 @@
   };
 
   # ============================================================================
+  # GHOSTFOLIO (Podman Container)
+  # ============================================================================
+
+  # Podman als Container-Runtime
+  virtualisation.podman = {
+    enable = true;
+    defaultNetwork.settings.dns_enabled = true;
+  };
+
+  # Podman-Netzwerk fuer Ghostfolio erstellen
+  systemd.services.create-ghostfolio-network = {
+    description = "Create Podman network for Ghostfolio";
+    after = [ "podman.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      ${pkgs.podman}/bin/podman network exists ghostfolio-net || \
+      ${pkgs.podman}/bin/podman network create ghostfolio-net
+    '';
+  };
+
+  # OCI-Container
+  virtualisation.oci-containers.backend = "podman";
+  virtualisation.oci-containers.containers = {
+
+    ghostfolio-postgres = {
+      image = "docker.io/library/postgres:15-alpine";
+      environmentFiles = [ config.sops.secrets.ghostfolio_env.path ];
+      volumes = [ "ghostfolio-pgdata:/var/lib/postgresql/data" ];
+      extraOptions = [
+        "--network=ghostfolio-net"
+        "--cap-drop=ALL"
+        "--cap-add=DAC_OVERRIDE"
+        "--cap-add=SETGID"
+        "--cap-add=SETUID"
+        "--cap-add=FOWNER"
+        "--cap-add=CHOWN"
+        "--security-opt=no-new-privileges:true"
+        "--health-cmd=pg_isready -U ghostfolio"
+        "--health-interval=10s"
+        "--health-timeout=5s"
+        "--health-retries=5"
+      ];
+    };
+
+    ghostfolio-redis = {
+      image = "docker.io/library/redis:alpine";
+      extraOptions = [
+        "--network=ghostfolio-net"
+        "--cap-drop=ALL"
+        "--cap-add=SETGID"
+        "--cap-add=SETUID"
+        "--security-opt=no-new-privileges:true"
+        "--health-cmd=redis-cli ping"
+        "--health-interval=10s"
+        "--health-timeout=5s"
+        "--health-retries=5"
+      ];
+    };
+
+    ghostfolio = {
+      image = "docker.io/ghostfolio/ghostfolio:latest";
+      ports = [ "127.0.0.1:3333:3333" ];
+      environmentFiles = [ config.sops.secrets.ghostfolio_env.path ];
+      dependsOn = [ "ghostfolio-postgres" "ghostfolio-redis" ];
+      extraOptions = [
+        "--network=ghostfolio-net"
+        "--cap-drop=ALL"
+        "--cap-add=SETGID"
+        "--cap-add=SETUID"
+        "--security-opt=no-new-privileges:true"
+      ];
+    };
+  };
+
+  # Container-Services muessen auf das Netzwerk warten
+  systemd.services.podman-ghostfolio-postgres.after = [ "create-ghostfolio-network.service" ];
+  systemd.services.podman-ghostfolio-postgres.requires = [ "create-ghostfolio-network.service" ];
+  systemd.services.podman-ghostfolio-redis.after = [ "create-ghostfolio-network.service" ];
+  systemd.services.podman-ghostfolio-redis.requires = [ "create-ghostfolio-network.service" ];
+  systemd.services.podman-ghostfolio.after = [ "create-ghostfolio-network.service" ];
+  systemd.services.podman-ghostfolio.requires = [ "create-ghostfolio-network.service" ];
+
+  # ============================================================================
   # NGINX REVERSE PROXY (HARDENED)
   # ============================================================================
 
@@ -391,6 +482,19 @@
       locations."/relay-status" = {
         proxyPass = "http://127.0.0.1:22070/status";
         extraConfig = ''
+          proxy_hide_header X-Powered-By;
+          proxy_hide_header Server;
+        '';
+      };
+
+      # Ghostfolio
+      locations."/ghostfolio/" = {
+        proxyPass = "http://127.0.0.1:3333/";
+        proxyWebsockets = true;
+        extraConfig = ''
+          sub_filter '<base href="/">' '<base href="/ghostfolio/">';
+          sub_filter_once on;
+          proxy_set_header Accept-Encoding "";
           proxy_hide_header X-Powered-By;
           proxy_hide_header Server;
         '';
