@@ -487,24 +487,35 @@
         '';
       };
 
-      # Ghostfolio
-      locations."/ghostfolio/" = {
-        proxyPass = "http://127.0.0.1:3333/";
-        proxyWebsockets = true;
+      # Miniflux RSS Reader
+      locations."/miniflux/" = {
+        proxyPass = "http://127.0.0.1:8080/miniflux/";
         extraConfig = ''
-          sub_filter_types text/html;
-          sub_filter '<base href="/' '<base href="/ghostfolio/';
-          sub_filter_once on;
-          proxy_set_header Accept-Encoding "";
-          proxy_redirect ~^/(.*) /ghostfolio/$1;
           proxy_hide_header X-Powered-By;
           proxy_hide_header Server;
         '';
       };
+    };
 
-      # Miniflux RSS Reader
-      locations."/miniflux/" = {
-        proxyPass = "http://127.0.0.1:8080/miniflux/";
+    virtualHosts."ghostfolio.rusty-vault.de" = {
+      enableACME = true;
+      forceSSL = true;
+
+      extraConfig = ''
+        limit_req zone=general burst=20 nodelay;
+        limit_conn addr 10;
+
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-XSS-Protection "1; mode=block" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()" always;
+        add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+      '';
+
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:3333";
+        proxyWebsockets = true;
         extraConfig = ''
           proxy_hide_header X-Powered-By;
           proxy_hide_header Server;
