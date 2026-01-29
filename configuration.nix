@@ -517,9 +517,9 @@
         proxyPass = "http://127.0.0.1:3333";
         proxyWebsockets = true;
         extraConfig = ''
+          gzip off;
           proxy_hide_header X-Powered-By;
           proxy_hide_header Server;
-          proxy_hide_header ETag;
         '';
       };
     };
