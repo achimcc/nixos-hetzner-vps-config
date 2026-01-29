@@ -492,7 +492,8 @@
         proxyPass = "http://127.0.0.1:3333/";
         proxyWebsockets = true;
         extraConfig = ''
-          sub_filter '<base href="/">' '<base href="/ghostfolio/">';
+          sub_filter_types text/html;
+          sub_filter '<base href="/' '<base href="/ghostfolio/';
           sub_filter_once on;
           proxy_set_header Accept-Encoding "";
           proxy_redirect ~^/(.*) /ghostfolio/$1;
