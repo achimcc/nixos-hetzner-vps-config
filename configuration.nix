@@ -495,6 +495,7 @@
           sub_filter '<base href="/">' '<base href="/ghostfolio/">';
           sub_filter_once on;
           proxy_set_header Accept-Encoding "";
+          proxy_redirect ~^/(.*) /ghostfolio/$1;
           proxy_hide_header X-Powered-By;
           proxy_hide_header Server;
         '';
