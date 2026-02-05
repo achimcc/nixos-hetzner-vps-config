@@ -23,3 +23,6 @@ result-*
 .vscode/
 .idea/
 *.iml
+
+# Git worktrees
+.worktrees/
