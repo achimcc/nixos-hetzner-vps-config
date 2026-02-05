@@ -410,6 +410,64 @@
   systemd.services.podman-ghostfolio.requires = [ "create-ghostfolio-network.service" ];
 
   # ============================================================================
+  # PRIVATEBIN (PASTEBIN)
+  # ============================================================================
+
+  services.privatebin = {
+    enable = true;
+    enableNginx = true;
+    virtualHost = "privatebin.rusty-vault.de";
+
+    settings = {
+      main = {
+        name = "rusty-vault PrivateBin";
+        discussion = true;
+        opendiscussion = true;
+        fileupload = true;
+        burnafterreadingselected = false;
+        defaultformatter = "plaintext";
+        languageselection = true;
+        sizelimit = 10485760;  # 10MB
+        template = "bootstrap";
+        languagedefault = "de";
+      };
+
+      expire = {
+        default = "1month";
+      };
+
+      expire_options = {
+        "5min" = 300;
+        "10min" = 600;
+        "1hour" = 3600;
+        "1day" = 86400;
+        "1week" = 604800;
+        "1month" = 2592000;
+        "1year" = 31536000;
+        "never" = 0;
+      };
+
+      formatter_options = {
+        plaintext = "Plain Text";
+        syntaxhighlighting = "Source Code";
+        markdown = "Markdown";
+      };
+
+      model = {
+        class = "Filesystem";
+      };
+
+      model_options = {
+        dir = "/var/lib/privatebin/data";
+      };
+
+      purge = {
+        limit = 300;
+      };
+    };
+  };
+
+  # ============================================================================
   # NGINX REVERSE PROXY (HARDENED)
   # ============================================================================
 
@@ -518,6 +576,31 @@
           proxy_hide_header Server;
         '';
       };
+    };
+
+    virtualHosts."privatebin.rusty-vault.de" = {
+      enableACME = true;
+      forceSSL = true;
+      serverAliases = [ "pastebin.rusty-vault.de" ];
+
+      extraConfig = ''
+        # Rate Limiting (relaxed burst for initial JS load)
+        limit_req zone=general burst=30 nodelay;
+        limit_conn addr 10;
+
+        # Security Headers (consistent with other services)
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-XSS-Protection "1; mode=block" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()" always;
+        add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+
+        # PrivateBin sets its own CSP headers - don't override them
+
+        # Upload size limit
+        client_max_body_size 10M;
+      '';
     };
   };
 
