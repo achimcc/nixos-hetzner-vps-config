@@ -532,9 +532,23 @@
 
         # DKIM signing
         DKIM_PRIVATE_KEY_PATH = "/dkim/dkim.key";
+        DKIM_PUBLIC_KEY_PATH = "/dkim/dkim.pub.key";
+
+        # OpenID/JWT keys (optional but app may require them)
+        OPENID_PRIVATE_KEY_PATH = "/dkim/openid.key";
+        OPENID_PUBLIC_KEY_PATH = "/dkim/openid.pub.key";
+
+        # Word list for random alias suffixes
+        WORDS_FILE_PATH = "/app/local_data/words.txt";
+
+        # DNS nameservers
+        NAMESERVERS = "8.8.8.8,1.1.1.1";
 
         # Flask configuration
         FLASK_SECRET = "/run/secrets/simplelogin_flask_secret";
+
+        # Disable email sending for now (can enable later)
+        NOT_SEND_EMAIL = "false";
 
         # Disable local email server (we use host Postfix)
         LOCAL_FILE_UPLOAD = "1";
