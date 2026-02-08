@@ -880,9 +880,8 @@
           # Override X-Forwarded-Proto to ensure HTTPS is used
           proxy_set_header X-Forwarded-Proto $scheme;
 
-          # Use default proxy_redirect which rewrites Location based on proxyPass
-          # This should rewrite http://127.0.0.1:7777/path to https://simplelogin.rusty-vault.de/path
-          proxy_redirect default;
+          # Rewrite Location header from http to https for this hostname only
+          proxy_redirect ~^http://([^/]+)(.*)$ https://$1$2;
         '';
       };
     };
