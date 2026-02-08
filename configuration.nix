@@ -4,68 +4,8 @@
   imports = [
     ./hardware-configuration.nix
     ./modules/secrets.nix
+    ./modules/common/security-hardening.nix
   ];
-
-  # ============================================================================
-  # SECURITY HARDENING
-  # ============================================================================
-
-  # --- Kernel Hardening ---
-  boot.kernel.sysctl = {
-    # Netzwerk-Hardening
-    "net.ipv4.conf.all.accept_redirects" = 0;
-    "net.ipv4.conf.default.accept_redirects" = 0;
-    "net.ipv4.conf.all.secure_redirects" = 0;
-    "net.ipv4.conf.default.secure_redirects" = 0;
-    "net.ipv6.conf.all.accept_redirects" = 0;
-    "net.ipv6.conf.default.accept_redirects" = 0;
-    "net.ipv4.conf.all.send_redirects" = 0;
-    "net.ipv4.conf.default.send_redirects" = 0;
-    "net.ipv4.conf.all.accept_source_route" = 0;
-    "net.ipv4.conf.default.accept_source_route" = 0;
-    "net.ipv6.conf.all.accept_source_route" = 0;
-    "net.ipv6.conf.default.accept_source_route" = 0;
-    "net.ipv4.conf.all.log_martians" = 1;
-    "net.ipv4.conf.default.log_martians" = 1;
-    "net.ipv4.icmp_echo_ignore_broadcasts" = 1;
-    "net.ipv4.icmp_ignore_bogus_error_responses" = 1;
-    "net.ipv4.conf.all.rp_filter" = 1;
-    "net.ipv4.conf.default.rp_filter" = 1;
-    "net.ipv4.tcp_syncookies" = 1;
-    "net.ipv4.tcp_timestamps" = 0;
-
-    # Speicher-Hardening
-    "kernel.randomize_va_space" = 2;
-    "kernel.kptr_restrict" = 2;
-    "kernel.dmesg_restrict" = 1;
-    "kernel.perf_event_paranoid" = 3;
-    "kernel.yama.ptrace_scope" = 2;
-    "kernel.unprivileged_bpf_disabled" = 1;
-    "net.core.bpf_jit_harden" = 2;
-
-    # Filesystem-Hardening
-    "fs.protected_hardlinks" = 1;
-    "fs.protected_symlinks" = 1;
-    "fs.protected_fifos" = 2;
-    "fs.protected_regular" = 2;
-    "fs.suid_dumpable" = 0;
-  };
-
-  # Kernel-Module Blacklist (ungenutzte/unsichere Module)
-  boot.blacklistedKernelModules = [
-    "dccp" "sctp" "rds" "tipc"  # Ungenutzte Netzwerk-Protokolle
-    "cramfs" "freevxfs" "jffs2" "hfs" "hfsplus" "udf"  # Ungenutzte Dateisysteme
-    "firewire-core" "firewire-ohci" "firewire-sbp2"  # FireWire
-    "thunderbolt"  # Thunderbolt (nicht auf VPS benoetigt)
-  ];
-
-  # --- Automatische Sicherheitsupdates ---
-  system.autoUpgrade = {
-    enable = true;
-    allowReboot = false;  # Manueller Reboot nach Updates
-    dates = "04:00";
-    randomizedDelaySec = "30min";
-  };
 
   # --- Benutzer-Hardening ---
   # Separater Admin-Benutzer statt direktem Root-Login
@@ -930,85 +870,6 @@
     logRefusedConnections = true;
     logRefusedPackets = true;
   };
-
-  # ============================================================================
-  # AUDIT & LOGGING
-  # ============================================================================
-
-  # Auditd fuer Security-Monitoring
-  security.auditd.enable = true;
-  security.audit = {
-    enable = true;
-    rules = [
-      # Login-Versuche ueberwachen
-      "-w /var/log/faillog -p wa -k logins"
-      "-w /var/log/lastlog -p wa -k logins"
-
-      # Sudo-Nutzung ueberwachen
-      "-w /etc/sudoers -p wa -k sudoers"
-      "-w /etc/sudoers.d -p wa -k sudoers"
-
-      # SSH-Konfiguration ueberwachen
-      "-w /etc/ssh/sshd_config -p wa -k sshd"
-
-      # Systemd-Units ueberwachen
-      "-w /etc/systemd -p wa -k systemd"
-    ];
-  };
-
-  # Journald-Konfiguration
-  services.journald = {
-    extraConfig = ''
-      Storage=persistent
-      Compress=yes
-      SystemMaxUse=500M
-      MaxRetentionSec=1month
-    '';
-  };
-
-  # ============================================================================
-  # ZUSAETZLICHE SICHERHEIT
-  # ============================================================================
-
-  # AppArmor aktivieren
-  security.apparmor.enable = true;
-
-  # Polkit (Rechteverwaltung)
-  security.polkit.enable = true;
-
-  # Coredumps deaktivieren (Datenleck-Risiko)
-  systemd.coredump.enable = false;
-
-  # DNS-over-TLS mit systemd-resolved
-  services.resolved = {
-    enable = true;
-    settings = {
-      Resolve = {
-        DNSSEC = "allow-downgrade";
-        DNSOverTLS = "opportunistic";
-        FallbackDNS = [
-          "9.9.9.9#dns.quad9.net"
-          "149.112.112.112#dns.quad9.net"
-        ];
-      };
-    };
-  };
-
-  # Chrony statt ntpd (sicherer)
-  services.chrony = {
-    enable = true;
-    servers = [
-      "0.de.pool.ntp.org"
-      "1.de.pool.ntp.org"
-      "2.de.pool.ntp.org"
-    ];
-  };
-
-  # NTP deaktivieren (Chrony uebernimmt)
-  services.timesyncd.enable = false;
-
-  # Cron deaktivieren (systemd-timer verwenden)
-  services.cron.enable = false;
 
   # Diese Version nicht aendern (definiert Kompatibilitaet)
   system.stateVersion = "25.05";
