@@ -33,6 +33,10 @@
       sopsFile = ./secrets/simplelogin.yaml;
       mode = "0400";
     };
+    secrets.simplelogin_db_uri = {
+      sopsFile = ./secrets/simplelogin.yaml;
+      mode = "0400";
+    };
     secrets.simplelogin_flask_secret = {
       sopsFile = ./secrets/simplelogin.yaml;
       mode = "0400";
@@ -514,8 +518,8 @@
         PREMIUM = "true";
         MAX_NB_EMAIL_FREE_PLAN = "999999";
 
-        # Database connection
-        DB_URI = "postgresql://simplelogin@simplelogin-postgres:5432/simplelogin";
+        # Database connection - DB_URI comes from environmentFiles with password
+        # (cannot hardcode password here due to security)
 
         # Redis
         REDIS_URL = "redis://simplelogin-redis:6379";
@@ -533,7 +537,8 @@
       };
 
       environmentFiles = [
-        config.sops.secrets.simplelogin_db_password.path
+        config.sops.secrets.simplelogin_db_password.path  # POSTGRES_PASSWORD for DB container
+        config.sops.secrets.simplelogin_db_uri.path       # DB_URI with embedded password
       ];
 
       volumes = [
