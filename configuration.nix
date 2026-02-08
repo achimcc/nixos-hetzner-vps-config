@@ -595,7 +595,6 @@
     config = {
       # SimpleLogin Virtual Domain
       virtual_alias_domains = "sl.rusty-vault.de";
-      virtual_alias_maps = "hash:/etc/postfix/virtual";
 
       # SMTP Settings
       smtpd_banner = "$myhostname ESMTP";
