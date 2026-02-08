@@ -643,7 +643,7 @@
       # SASL Authentication for relay (Posteo SMTP on port 587)
       relayhost = lib.mkForce "[posteo.de]:587";
       smtp_sasl_auth_enable = "yes";
-      smtp_sasl_password_maps = "hash:/etc/postfix/sasl_passwd";
+      smtp_sasl_password_maps = "hash:/var/lib/postfix/sasl_passwd";
       smtp_sasl_security_options = "noanonymous";
       smtp_sasl_tls_security_options = "noanonymous";
       smtp_tls_wrappermode = "no";
@@ -689,14 +689,16 @@
     };
     script = ''
       set -x
-      mkdir -p /etc/postfix
+      mkdir -p /var/lib/postfix
       USERNAME=$(cat ${config.sops.secrets.posteo_smtp_username.path})
       PASSWORD=$(cat ${config.sops.secrets.posteo_smtp_password.path})
-      echo "[posteo.de]:587 $USERNAME:$PASSWORD" > /etc/postfix/sasl_passwd
-      chmod 600 /etc/postfix/sasl_passwd
-      cat /etc/postfix/sasl_passwd
-      ${pkgs.postfix}/bin/postmap /etc/postfix/sasl_passwd
-      ls -la /etc/postfix/sasl_passwd*
+      echo "[posteo.de]:587 $USERNAME:$PASSWORD" > /var/lib/postfix/sasl_passwd
+      chmod 600 /var/lib/postfix/sasl_passwd
+      chown postfix:postfix /var/lib/postfix/sasl_passwd
+      ${pkgs.postfix}/bin/postmap /var/lib/postfix/sasl_passwd
+      chown postfix:postfix /var/lib/postfix/sasl_passwd.db
+      chmod 600 /var/lib/postfix/sasl_passwd.db
+      ls -la /var/lib/postfix/sasl_passwd*
     '';
   };
 
