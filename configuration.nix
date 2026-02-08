@@ -678,16 +678,23 @@
   systemd.services.postfix-sasl-passwd = {
     description = "Generate Postfix SASL password file";
     wantedBy = [ "multi-user.target" ];
+    after = [ "sops-nix.service" ];
     before = [ "postfix.service" ];
+    wants = [ "sops-nix.service" ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
     };
     script = ''
+      set -x
       mkdir -p /etc/postfix
-      echo "[posteo.de]:587 $(cat ${config.sops.secrets.posteo_smtp_username.path}):$(cat ${config.sops.secrets.posteo_smtp_password.path})" > /etc/postfix/sasl_passwd
+      USERNAME=$(cat ${config.sops.secrets.posteo_smtp_username.path})
+      PASSWORD=$(cat ${config.sops.secrets.posteo_smtp_password.path})
+      echo "[posteo.de]:587 $USERNAME:$PASSWORD" > /etc/postfix/sasl_passwd
       chmod 600 /etc/postfix/sasl_passwd
+      cat /etc/postfix/sasl_passwd
       ${pkgs.postfix}/bin/postmap /etc/postfix/sasl_passwd
+      ls -la /etc/postfix/sasl_passwd*
     '';
   };
 
