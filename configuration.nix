@@ -45,11 +45,11 @@
       sopsFile = ./secrets/simplelogin.yaml;
       mode = "0400";
     };
-    secrets.posteo_smtp_username = {
+    secrets.brevo_smtp_username = {
       sopsFile = ./secrets/simplelogin.yaml;
       mode = "0400";
     };
-    secrets.posteo_smtp_password = {
+    secrets.brevo_smtp_password = {
       sopsFile = ./secrets/simplelogin.yaml;
       mode = "0400";
     };
@@ -640,8 +640,8 @@
       smtp_tls_security_level = "may";
       smtp_tls_loglevel = "1";
 
-      # SASL Authentication for relay (Posteo SMTP on port 587)
-      relayhost = lib.mkForce "[posteo.de]:587";
+      # SASL Authentication for relay (Brevo SMTP on port 587)
+      relayhost = lib.mkForce "[smtp-relay.brevo.com]:587";
       smtp_sasl_auth_enable = "yes";
       smtp_sasl_password_maps = "hash:/var/lib/postfix/sasl_passwd";
       smtp_sasl_security_options = "noanonymous";
@@ -691,9 +691,9 @@
       set -x
       mkdir -p /var/lib/postfix
       chown postfix:postfix /var/lib/postfix
-      USERNAME=$(cat ${config.sops.secrets.posteo_smtp_username.path})
-      PASSWORD=$(cat ${config.sops.secrets.posteo_smtp_password.path})
-      echo "[posteo.de]:587 $USERNAME:$PASSWORD" > /var/lib/postfix/sasl_passwd
+      USERNAME=$(cat ${config.sops.secrets.brevo_smtp_username.path})
+      PASSWORD=$(cat ${config.sops.secrets.brevo_smtp_password.path})
+      echo "[smtp-relay.brevo.com]:587 $USERNAME:$PASSWORD" > /var/lib/postfix/sasl_passwd
       chmod 600 /var/lib/postfix/sasl_passwd
       ${pkgs.postfix}/bin/postmap /var/lib/postfix/sasl_passwd
       chmod 600 /var/lib/postfix/sasl_passwd.db
