@@ -690,14 +690,14 @@
     script = ''
       set -x
       mkdir -p /var/lib/postfix
+      chown postfix:postfix /var/lib/postfix
       USERNAME=$(cat ${config.sops.secrets.posteo_smtp_username.path})
       PASSWORD=$(cat ${config.sops.secrets.posteo_smtp_password.path})
       echo "[posteo.de]:587 $USERNAME:$PASSWORD" > /var/lib/postfix/sasl_passwd
       chmod 600 /var/lib/postfix/sasl_passwd
-      chown postfix:postfix /var/lib/postfix/sasl_passwd
       ${pkgs.postfix}/bin/postmap /var/lib/postfix/sasl_passwd
-      chown postfix:postfix /var/lib/postfix/sasl_passwd.db
       chmod 600 /var/lib/postfix/sasl_passwd.db
+      chown postfix:postfix /var/lib/postfix/sasl_passwd*
       ls -la /var/lib/postfix/sasl_passwd*
     '';
   };
