@@ -24,6 +24,7 @@
     ./modules/services/privatebin.nix
     ./modules/services/syncthing-relay.nix
     ./modules/services/veilid.nix
+    ./modules/services/jitsi.nix
     ./modules/services/mail/postfix.nix
     ./modules/services/monitoring/fail2ban.nix
 

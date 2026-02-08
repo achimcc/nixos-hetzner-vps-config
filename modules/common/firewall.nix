@@ -14,6 +14,9 @@
       443     # HTTPS
       22067   # Syncthing Relay
     ];
+    allowedUDPPorts = [
+      10000   # Jitsi Videobridge (JVB) media streaming
+    ];
 
     # ICMP Rate Limiting
     extraCommands = ''

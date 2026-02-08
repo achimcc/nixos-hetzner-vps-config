@@ -57,5 +57,13 @@
       sopsFile = ../secrets/simplelogin.yaml;
       mode = "0400";
     };
+
+    # Jitsi Meet Moderator Credentials
+    secrets.jitsi_moderator_password = {
+      sopsFile = ../secrets/jitsi.yaml;
+      mode = "0400";
+      owner = "prosody";
+      group = "prosody";
+    };
   };
 }
