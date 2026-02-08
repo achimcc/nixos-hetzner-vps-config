@@ -641,7 +641,7 @@
       smtp_tls_loglevel = "1";
 
       # SASL Authentication for relay (Posteo SMTP on port 587)
-      relayhost = "[posteo.de]:587";
+      relayhost = lib.mkForce "[posteo.de]:587";
       smtp_sasl_auth_enable = "yes";
       smtp_sasl_password_maps = "hash:/etc/postfix/sasl_passwd";
       smtp_sasl_security_options = "noanonymous";
