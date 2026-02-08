@@ -530,6 +530,9 @@
         POSTFIX_SUBMISSION_TLS = "false";
         EMAIL_SERVERS_WITH_PRIORITY = "[(\"host.containers.internal\", 25)]";
 
+        # DKIM signing
+        DKIM_PRIVATE_KEY_PATH = "/dkim/dkim.key";
+
         # Flask configuration
         FLASK_SECRET = "/run/secrets/simplelogin_flask_secret";
 
