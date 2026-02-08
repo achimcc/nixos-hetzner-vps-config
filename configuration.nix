@@ -29,6 +29,18 @@
       sopsFile = ./secrets/ghostfolio.yaml;
       mode = "0400";
     };
+    secrets.simplelogin_db_password = {
+      sopsFile = ./secrets/simplelogin.yaml;
+      mode = "0400";
+    };
+    secrets.simplelogin_flask_secret = {
+      sopsFile = ./secrets/simplelogin.yaml;
+      mode = "0400";
+    };
+    secrets.simplelogin_email_secret = {
+      sopsFile = ./secrets/simplelogin.yaml;
+      mode = "0400";
+    };
   };
 
   # ============================================================================
