@@ -471,6 +471,28 @@
         "--health-retries=5"
       ];
     };
+
+    # SimpleLogin Redis Cache
+    simplelogin-redis = {
+      image = "docker.io/library/redis:7-alpine";
+      autoStart = true;
+
+      volumes = [
+        "/var/lib/simplelogin/redis:/data"
+      ];
+
+      extraOptions = [
+        "--network=simplelogin-net"
+        "--cap-drop=ALL"
+        "--cap-add=SETGID"
+        "--cap-add=SETUID"
+        "--security-opt=no-new-privileges:true"
+        "--health-cmd=redis-cli ping"
+        "--health-interval=10s"
+        "--health-timeout=5s"
+        "--health-retries=5"
+      ];
+    };
   };
 
   # Container-Services muessen auf das Netzwerk warten
