@@ -3,51 +3,8 @@
 {
   imports = [
     ./hardware-configuration.nix
-    # sops-nix is now loaded via flake.nix
+    ./modules/secrets.nix
   ];
-
-  # --- SOPS Konfiguration ---
-  sops = {
-    defaultSopsFile = ./secrets/secrets.yaml;
-    age.keyFile = "/var/lib/sops-nix/key.txt";
-    secrets.miniflux_admin = {
-      # Der miniflux user wird automatisch vom Service erstellt
-      # Wir setzen owner/group manuell um das Problem zu umgehen
-      mode = "0400";
-    };
-    secrets.vaultwarden_env = {
-      sopsFile = ./secrets/vaultwarden.yaml;
-      mode = "0400";
-    };
-    secrets.ghostfolio_env = {
-      sopsFile = ./secrets/ghostfolio.yaml;
-      mode = "0400";
-    };
-    secrets.simplelogin_db_password = {
-      sopsFile = ./secrets/simplelogin.yaml;
-      mode = "0400";
-    };
-    secrets.simplelogin_db_uri = {
-      sopsFile = ./secrets/simplelogin.yaml;
-      mode = "0400";
-    };
-    secrets.simplelogin_flask_secret = {
-      sopsFile = ./secrets/simplelogin.yaml;
-      mode = "0400";
-    };
-    secrets.simplelogin_email_secret = {
-      sopsFile = ./secrets/simplelogin.yaml;
-      mode = "0400";
-    };
-    secrets.brevo_smtp_username = {
-      sopsFile = ./secrets/simplelogin.yaml;
-      mode = "0400";
-    };
-    secrets.brevo_smtp_password = {
-      sopsFile = ./secrets/simplelogin.yaml;
-      mode = "0400";
-    };
-  };
 
   # ============================================================================
   # SECURITY HARDENING
