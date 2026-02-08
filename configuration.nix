@@ -572,6 +572,71 @@
   systemd.services.podman-ghostfolio.requires = [ "create-ghostfolio-network.service" ];
 
   # ============================================================================
+  # POSTFIX (MAIL SERVER FOR SIMPLELOGIN)
+  # ============================================================================
+
+  services.postfix = {
+    enable = true;
+    hostname = "mail.rusty-vault.de";
+
+    # SimpleLogin as Virtual Alias Domain
+    virtual = ''
+      @sl.rusty-vault.de simplelogin
+    '';
+
+    # Transport: All sl.rusty-vault.de emails to SimpleLogin
+    transport = ''
+      sl.rusty-vault.de smtp:[127.0.0.1]:7777
+    '';
+
+    # Relay Host (empty = direct sending)
+    relayHost = "";
+
+    config = {
+      # SimpleLogin Virtual Domain
+      virtual_alias_domains = "sl.rusty-vault.de";
+      virtual_alias_maps = "hash:/etc/postfix/virtual";
+
+      # SMTP Settings
+      smtpd_banner = "$myhostname ESMTP";
+
+      # TLS for incoming connections
+      smtpd_tls_cert_file = "/var/lib/acme/mail.rusty-vault.de/cert.pem";
+      smtpd_tls_key_file = "/var/lib/acme/mail.rusty-vault.de/key.pem";
+      smtpd_use_tls = "yes";
+      smtpd_tls_security_level = "may";
+
+      # TLS for outgoing connections
+      smtp_tls_security_level = "may";
+      smtp_tls_loglevel = "1";
+
+      # Message size limit (25MB)
+      message_size_limit = "26214400";
+
+      # Rate Limiting
+      smtpd_client_connection_rate_limit = "10";
+      smtpd_error_sleep_time = "1s";
+      smtpd_soft_error_limit = "10";
+      smtpd_hard_error_limit = "20";
+
+      # Reject invalid recipients early
+      smtpd_recipient_restrictions = lib.concatStringsSep "," [
+        "reject_non_fqdn_recipient"
+        "reject_unknown_recipient_domain"
+        "permit_mynetworks"
+        "reject_unauth_destination"
+      ];
+    };
+  };
+
+  # ACME Certificate for mail.rusty-vault.de
+  security.acme.certs."mail.rusty-vault.de" = {
+    email = "achim.schneider@posteo.de";
+    webroot = "/var/lib/acme/acme-challenge";
+    postRun = "systemctl reload postfix";
+  };
+
+  # ============================================================================
   # PRIVATEBIN (PASTEBIN)
   # ============================================================================
 
@@ -764,6 +829,38 @@
         client_max_body_size 10M;
       '';
     };
+
+    virtualHosts."simplelogin.rusty-vault.de" = {
+      enableACME = true;
+      forceSSL = true;
+
+      extraConfig = ''
+        # Rate Limiting
+        limit_req zone=general burst=20 nodelay;
+        limit_conn addr 10;
+
+        # Security Headers (consistent with other services)
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-XSS-Protection "1; mode=block" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()" always;
+        add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+
+        # Upload size limit for email attachments
+        client_max_body_size 25M;
+      '';
+
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:7777";
+        extraConfig = ''
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto https;
+        '';
+      };
+    };
   };
 
   # ============================================================================
@@ -787,6 +884,7 @@
     enable = true;
     allowedTCPPorts = [
       22      # SSH
+      25      # SMTP for SimpleLogin incoming emails
       80      # HTTP
       443     # HTTPS
       22067   # Syncthing Relay
