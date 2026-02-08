@@ -597,11 +597,6 @@
     enable = true;
     hostname = "mail.rusty-vault.de";
 
-    # SimpleLogin as Virtual Alias Domain
-    virtual = ''
-      @sl.rusty-vault.de simplelogin
-    '';
-
     # Transport: All sl.rusty-vault.de emails to SimpleLogin
     transport = ''
       sl.rusty-vault.de smtp:[127.0.0.1]:7777
@@ -611,8 +606,9 @@
     relayHost = "";
 
     config = {
-      # SimpleLogin Virtual Domain
-      virtual_alias_domains = "sl.rusty-vault.de";
+      # SimpleLogin Relay Domain - accept and relay all mail to SimpleLogin
+      relay_domains = "sl.rusty-vault.de";
+      relay_recipient_maps = "";
 
       # SMTP Settings
       smtpd_banner = "$myhostname ESMTP";
