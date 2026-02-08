@@ -383,7 +383,7 @@
     # SimpleLogin directories
     "d /var/lib/simplelogin 0755 root root -"
     "d /var/lib/simplelogin/postgres 0750 70 70 -"
-    "d /var/lib/simplelogin/redis 0750 999 1000 -"
+    "d /var/lib/simplelogin/redis 0755 999 999 -"
     "d /var/lib/simplelogin/data 0750 root root -"
     "d /var/lib/simplelogin/upload 0750 root root -"
     "d /var/lib/simplelogin/dkim 0700 root root -"
