@@ -858,6 +858,12 @@
         limit_req zone=general burst=20 nodelay;
         limit_conn addr 10;
 
+        # WORKAROUND: Fix malformed redirects with duplicate hostname
+        # Rewrite URLs like "simplelogin.rusty-vault.de,simplelogin.rusty-vault.de/path" to "/path"
+        if ($request_uri ~ "^/simplelogin.rusty-vault.de,simplelogin.rusty-vault.de(.*)$") {
+          return 301 https://simplelogin.rusty-vault.de$1;
+        }
+
         # Security Headers (consistent with other services)
         add_header X-Frame-Options "SAMEORIGIN" always;
         add_header X-Content-Type-Options "nosniff" always;
