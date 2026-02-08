@@ -359,6 +359,21 @@
     '';
   };
 
+  # Podman-Netzwerk fuer SimpleLogin erstellen
+  systemd.services.create-simplelogin-network = {
+    description = "Create Podman network for SimpleLogin";
+    after = [ "podman.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      ${pkgs.podman}/bin/podman network exists simplelogin-net || \
+      ${pkgs.podman}/bin/podman network create simplelogin-net
+    '';
+  };
+
   # OCI-Container
   virtualisation.oci-containers.backend = "podman";
   virtualisation.oci-containers.containers = {
