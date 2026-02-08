@@ -633,9 +633,10 @@
       smtpd_hard_error_limit = "20";
 
       # Reject invalid recipients early
+      # Note: reject_unknown_recipient_domain removed to allow relay_domains
+      # even when DNS is not yet fully propagated
       smtpd_recipient_restrictions = lib.concatStringsSep "," [
         "reject_non_fqdn_recipient"
-        "reject_unknown_recipient_domain"
         "permit_mynetworks"
         "reject_unauth_destination"
       ];
