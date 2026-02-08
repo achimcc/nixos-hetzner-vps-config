@@ -503,8 +503,12 @@
       image = "docker.io/simplelogin/app:latest";
       autoStart = true;
 
+      # Run both web server and email handler
+      cmd = [ "sh" "-c" "gunicorn wsgi:app -b 0.0.0.0:7777 -w 2 --timeout 15 & python /code/email_handler.py" ];
+
       ports = [
-        "127.0.0.1:7777:7777"
+        "127.0.0.1:7777:7777"      # Web UI
+        "127.0.0.1:20381:20381"    # Email handler (SMTP)
       ];
 
       environment = {
@@ -597,9 +601,9 @@
     enable = true;
     hostname = "mail.rusty-vault.de";
 
-    # Transport: All sl.rusty-vault.de emails to SimpleLogin
+    # Transport: All sl.rusty-vault.de emails to SimpleLogin email handler
     transport = ''
-      sl.rusty-vault.de smtp:[127.0.0.1]:7777
+      sl.rusty-vault.de smtp:[127.0.0.1]:20381
     '';
 
     # Relay Host (empty = direct sending)
