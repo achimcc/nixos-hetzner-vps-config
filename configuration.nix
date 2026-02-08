@@ -493,6 +493,69 @@
         "--health-retries=5"
       ];
     };
+
+    # SimpleLogin Application
+    simplelogin-app = {
+      image = "docker.io/simplelogin/app:latest";
+      autoStart = true;
+
+      ports = [
+        "127.0.0.1:7777:7777"
+      ];
+
+      environment = {
+        # URLs & Domains
+        URL = "https://simplelogin.rusty-vault.de";
+        EMAIL_DOMAIN = "sl.rusty-vault.de";
+        SUPPORT_EMAIL = "support@sl.rusty-vault.de";
+        SUPPORT_NAME = "SimpleLogin Support";
+
+        # Premium Features (all enabled for self-hosting)
+        PREMIUM = "true";
+        MAX_NB_EMAIL_FREE_PLAN = "999999";
+
+        # Database connection
+        DB_URI = "postgresql://simplelogin@simplelogin-postgres:5432/simplelogin";
+
+        # Redis
+        REDIS_URL = "redis://simplelogin-redis:6379";
+
+        # Email via Postfix on host
+        POSTFIX_SERVER = "host.containers.internal";
+        POSTFIX_PORT = "25";
+        POSTFIX_SUBMISSION_TLS = "false";
+
+        # Flask configuration
+        FLASK_SECRET = "/run/secrets/simplelogin_flask_secret";
+
+        # Disable local email server (we use host Postfix)
+        LOCAL_FILE_UPLOAD = "1";
+      };
+
+      environmentFiles = [
+        config.sops.secrets.simplelogin_db_password.path
+      ];
+
+      volumes = [
+        "/var/lib/simplelogin/data:/sl/data"
+        "/var/lib/simplelogin/upload:/code/static/upload"
+        "/var/lib/simplelogin/dkim:/dkim"
+        "${config.sops.secrets.simplelogin_flask_secret.path}:/run/secrets/simplelogin_flask_secret:ro"
+      ];
+
+      extraOptions = [
+        "--network=simplelogin-net"
+        "--add-host=host.containers.internal:host-gateway"
+        "--cap-drop=ALL"
+        "--cap-add=NET_BIND_SERVICE"
+        "--security-opt=no-new-privileges:true"
+      ];
+
+      dependsOn = [
+        "simplelogin-postgres"
+        "simplelogin-redis"
+      ];
+    };
   };
 
   # Container-Services muessen auf das Netzwerk warten
