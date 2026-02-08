@@ -1,16 +1,10 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, inputs, commonConfig, ... }:
 
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-      # sops-nix fuer verschluesselte Secrets
-      (builtins.fetchTarball {
-        url = "https://github.com/Mic92/sops-nix/archive/master.tar.gz";
-        # Optional: Pin auf eine spezifische Version fuer Reproduzierbarkeit
-        # sha256 = "...";
-      } + "/modules/sops")
-    ];
+  imports = [
+    ./hardware-configuration.nix
+    # sops-nix is now loaded via flake.nix
+  ];
 
   # --- SOPS Konfiguration ---
   sops = {
@@ -607,25 +601,22 @@
 
   services.postfix = {
     enable = true;
-    hostname = "mail.rusty-vault.de";
 
     # Transport: All sl.rusty-vault.de emails to SimpleLogin email handler
     transport = ''
       sl.rusty-vault.de smtp:[127.0.0.1]:20381
     '';
 
-    # Relay Host: Use Posteo SMTP on port 587 (port 25 blocked by Hetzner)
-    # Note: NixOS Postfix module doesn't support port in relayHost, set via config
-    relayHost = "posteo.de";
     setSendmail = true;
 
-    config = {
+    settings.main = {
+      myhostname = "mail.rusty-vault.de";
       # SimpleLogin Relay Domain - accept and relay all mail to SimpleLogin
-      relay_domains = "sl.rusty-vault.de";
-      relay_recipient_maps = "";
+      relay_domains = [ "sl.rusty-vault.de" ];
+      relay_recipient_maps = [];
 
       # Allow container network to relay outbound mail (for SimpleLogin forwarding)
-      mynetworks = "127.0.0.0/8 10.89.0.0/16 [::1]/128";
+      mynetworks = [ "127.0.0.0/8" "10.89.0.0/16" "[::1]/128" ];
 
       # SMTP Settings
       smtpd_banner = "$myhostname ESMTP";
@@ -641,7 +632,7 @@
       smtp_tls_loglevel = "1";
 
       # SASL Authentication for relay (Brevo SMTP on port 587)
-      relayhost = lib.mkForce "[smtp-relay.brevo.com]:587";
+      relayhost = [ "smtp-relay.brevo.com:587" ];
       smtp_sasl_auth_enable = "yes";
       smtp_sasl_password_maps = "hash:/var/lib/postfix/sasl_passwd";
       smtp_sasl_security_options = "noanonymous";
@@ -650,13 +641,13 @@
       smtp_use_tls = "yes";
 
       # Message size limit (25MB)
-      message_size_limit = "26214400";
+      message_size_limit = 26214400;
 
       # Rate Limiting
-      smtpd_client_connection_rate_limit = "10";
+      smtpd_client_connection_rate_limit = 10;
       smtpd_error_sleep_time = "1s";
-      smtpd_soft_error_limit = "10";
-      smtpd_hard_error_limit = "20";
+      smtpd_soft_error_limit = 10;
+      smtpd_hard_error_limit = 20;
 
       # Reject invalid recipients early
       # Note: reject_unknown_recipient_domain removed to allow relay_domains
@@ -1034,14 +1025,16 @@
   # DNS-over-TLS mit systemd-resolved
   services.resolved = {
     enable = true;
-    dnssec = "allow-downgrade";
-    extraConfig = ''
-      DNSOverTLS=opportunistic
-    '';
-    fallbackDns = [
-      "9.9.9.9#dns.quad9.net"
-      "149.112.112.112#dns.quad9.net"
-    ];
+    settings = {
+      Resolve = {
+        DNSSEC = "allow-downgrade";
+        DNSOverTLS = "opportunistic";
+        FallbackDNS = [
+          "9.9.9.9#dns.quad9.net"
+          "149.112.112.112#dns.quad9.net"
+        ];
+      };
+    };
   };
 
   # Chrony statt ntpd (sicherer)
