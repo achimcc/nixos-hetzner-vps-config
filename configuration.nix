@@ -437,6 +437,40 @@
         "--security-opt=no-new-privileges:true"
       ];
     };
+
+    # SimpleLogin PostgreSQL Database
+    simplelogin-postgres = {
+      image = "docker.io/library/postgres:15-alpine";
+      autoStart = true;
+
+      environment = {
+        POSTGRES_DB = "simplelogin";
+        POSTGRES_USER = "simplelogin";
+      };
+
+      environmentFiles = [
+        config.sops.secrets.simplelogin_db_password.path
+      ];
+
+      volumes = [
+        "/var/lib/simplelogin/postgres:/var/lib/postgresql/data"
+      ];
+
+      extraOptions = [
+        "--network=simplelogin-net"
+        "--cap-drop=ALL"
+        "--cap-add=DAC_OVERRIDE"
+        "--cap-add=SETGID"
+        "--cap-add=SETUID"
+        "--cap-add=FOWNER"
+        "--cap-add=CHOWN"
+        "--security-opt=no-new-privileges:true"
+        "--health-cmd=pg_isready -U simplelogin"
+        "--health-interval=10s"
+        "--health-timeout=5s"
+        "--health-retries=5"
+      ];
+    };
   };
 
   # Container-Services muessen auf das Netzwerk warten
