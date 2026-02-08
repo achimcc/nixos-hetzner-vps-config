@@ -510,8 +510,6 @@
       environment = {
         # URLs & Domains
         URL = "https://simplelogin.rusty-vault.de";
-        SERVER_NAME = "simplelogin.rusty-vault.de";
-        PREFERRED_URL_SCHEME = "https";
         EMAIL_DOMAIN = "sl.rusty-vault.de";
         SUPPORT_EMAIL = "support@sl.rusty-vault.de";
         SUPPORT_NAME = "SimpleLogin Support";
