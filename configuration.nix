@@ -615,7 +615,8 @@
     '';
 
     # Relay Host: Use Posteo SMTP on port 587 (port 25 blocked by Hetzner)
-    relayHost = "[posteo.de]:587";
+    # Note: NixOS Postfix module doesn't support port in relayHost, set via config
+    relayHost = "posteo.de";
     setSendmail = true;
 
     config = {
@@ -639,7 +640,8 @@
       smtp_tls_security_level = "may";
       smtp_tls_loglevel = "1";
 
-      # SASL Authentication for relay (Posteo SMTP)
+      # SASL Authentication for relay (Posteo SMTP on port 587)
+      relayhost = "[posteo.de]:587";
       smtp_sasl_auth_enable = "yes";
       smtp_sasl_password_maps = "hash:/etc/postfix/sasl_passwd";
       smtp_sasl_security_options = "noanonymous";
