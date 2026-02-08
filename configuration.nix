@@ -877,15 +877,12 @@
       locations."/" = {
         proxyPass = "http://127.0.0.1:7777";
         extraConfig = ''
-          proxy_set_header Host $host;
-          proxy_set_header X-Real-IP $remote_addr;
-          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-          proxy_set_header X-Forwarded-Proto https;
-          proxy_set_header X-Forwarded-Host $host;
+          # Override X-Forwarded-Proto to ensure HTTPS is used
+          proxy_set_header X-Forwarded-Proto $scheme;
 
-          # Fix redirects to use HTTPS
-          proxy_redirect http://127.0.0.1:7777/ https://$host/;
-          proxy_redirect http://$host/ https://$host/;
+          # Use default proxy_redirect which rewrites Location based on proxyPass
+          # This should rewrite http://127.0.0.1:7777/path to https://simplelogin.rusty-vault.de/path
+          proxy_redirect default;
         '';
       };
     };
