@@ -528,6 +528,7 @@
         POSTFIX_SERVER = "host.containers.internal";
         POSTFIX_PORT = "25";
         POSTFIX_SUBMISSION_TLS = "false";
+        EMAIL_SERVERS_WITH_PRIORITY = "[(\"host.containers.internal\", 25)]";
 
         # Flask configuration
         FLASK_SECRET = "/run/secrets/simplelogin_flask_secret";
