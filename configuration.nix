@@ -539,7 +539,7 @@
         OPENID_PUBLIC_KEY_PATH = "/dkim/openid.pub.key";
 
         # Word list for random alias suffixes
-        WORDS_FILE_PATH = "/app/local_data/words.txt";
+        WORDS_FILE_PATH = "/code/local_data/words.txt";
 
         # DNS nameservers
         NAMESERVERS = "8.8.8.8,1.1.1.1";
