@@ -614,6 +614,9 @@
       relay_domains = "sl.rusty-vault.de";
       relay_recipient_maps = "";
 
+      # Allow container network to relay outbound mail (for SimpleLogin forwarding)
+      mynetworks = "127.0.0.0/8 10.89.0.0/16 [::1]/128";
+
       # SMTP Settings
       smtpd_banner = "$myhostname ESMTP";
 
