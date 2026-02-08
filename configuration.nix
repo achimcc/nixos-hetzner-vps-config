@@ -879,8 +879,9 @@
           proxy_set_header X-Forwarded-Proto https;
           proxy_set_header X-Forwarded-Host $host;
 
-          # Don't rewrite redirects
-          proxy_redirect off;
+          # Fix redirects to use HTTPS
+          proxy_redirect http://127.0.0.1:7777/ https://$host/;
+          proxy_redirect http://$host/ https://$host/;
         '';
       };
     };
