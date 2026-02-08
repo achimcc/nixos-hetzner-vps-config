@@ -45,6 +45,14 @@
       sopsFile = ./secrets/simplelogin.yaml;
       mode = "0400";
     };
+    secrets.posteo_smtp_username = {
+      sopsFile = ./secrets/simplelogin.yaml;
+      mode = "0400";
+    };
+    secrets.posteo_smtp_password = {
+      sopsFile = ./secrets/simplelogin.yaml;
+      mode = "0400";
+    };
   };
 
   # ============================================================================
@@ -606,8 +614,9 @@
       sl.rusty-vault.de smtp:[127.0.0.1]:20381
     '';
 
-    # Relay Host (empty = direct sending)
-    relayHost = "";
+    # Relay Host: Use Posteo SMTP on port 587 (port 25 blocked by Hetzner)
+    relayHost = "[posteo.de]:587";
+    setSendmail = true;
 
     config = {
       # SimpleLogin Relay Domain - accept and relay all mail to SimpleLogin
@@ -629,6 +638,14 @@
       # TLS for outgoing connections
       smtp_tls_security_level = "may";
       smtp_tls_loglevel = "1";
+
+      # SASL Authentication for relay (Posteo SMTP)
+      smtp_sasl_auth_enable = "yes";
+      smtp_sasl_password_maps = "hash:/etc/postfix/sasl_passwd";
+      smtp_sasl_security_options = "noanonymous";
+      smtp_sasl_tls_security_options = "noanonymous";
+      smtp_tls_wrappermode = "no";
+      smtp_use_tls = "yes";
 
       # Message size limit (25MB)
       message_size_limit = "26214400";
@@ -655,6 +672,23 @@
     email = "achim.schneider@posteo.de";
     webroot = "/var/lib/acme/acme-challenge";
     postRun = "systemctl reload postfix";
+  };
+
+  # Generate Postfix SASL password file from SOPS secrets
+  systemd.services.postfix-sasl-passwd = {
+    description = "Generate Postfix SASL password file";
+    wantedBy = [ "multi-user.target" ];
+    before = [ "postfix.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      mkdir -p /etc/postfix
+      echo "[posteo.de]:587 $(cat ${config.sops.secrets.posteo_smtp_username.path}):$(cat ${config.sops.secrets.posteo_smtp_password.path})" > /etc/postfix/sasl_passwd
+      chmod 600 /etc/postfix/sasl_passwd
+      ${pkgs.postfix}/bin/postmap /etc/postfix/sasl_passwd
+    '';
   };
 
   # ============================================================================
