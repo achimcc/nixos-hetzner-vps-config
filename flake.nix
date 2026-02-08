@@ -13,6 +13,7 @@
   outputs = { self, nixpkgs, sops-nix, ... }@inputs:
     let
       system = "x86_64-linux";
+      pkgs = nixpkgs.legacyPackages.${system};
 
       # Common configuration shared across modules
       commonConfig = {
@@ -27,13 +28,16 @@
         };
         emailDomain = "sl.rusty-vault.de";
       };
+
+      # Custom library functions
+      customLib = import ./lib { inherit (nixpkgs) lib; inherit commonConfig pkgs; };
     in
     {
       nixosConfigurations.nixos-server = nixpkgs.lib.nixosSystem {
         inherit system;
 
         specialArgs = {
-          inherit inputs commonConfig;
+          inherit inputs commonConfig customLib;
         };
 
         modules = [
