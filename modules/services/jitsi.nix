@@ -40,6 +40,19 @@
       requireDisplayName = true;
     };
 
+    # Interface configuration (overrides)
+    interfaceConfig = {
+      # Disable the unsupported browser page
+      SHOW_JITSI_WATERMARK = false;
+      SHOW_WATERMARK_FOR_GUESTS = false;
+    };
+
+    # Additional custom configuration
+    extraConfig = ''
+      // Allow all browsers - disable unsupported browser check
+      config.disableDeepLinking = false;
+    '';
+
     # NGINX integration - managed by NixOS module
     nginx.enable = true;
 
@@ -57,6 +70,38 @@
   # The jitsi-meet module handles Prosody configuration automatically
   # We just need to enable it
   services.jitsi-meet.prosody.enable = true;
+
+  # Override Prosody config for secure domain
+  services.prosody.virtualHosts."${commonConfig.services.jitsi}" = lib.mkForce {
+    enabled = true;
+    domain = commonConfig.services.jitsi;
+    extraConfig = ''
+      authentication = "jitsi-anonymous"
+      c2s_require_encryption = false
+      admins = { "focus@auth.${commonConfig.services.jitsi}" }
+
+      speakerstats_component = "speakerstats.${commonConfig.services.jitsi}"
+      conference_duration_component = "conferenceduration.${commonConfig.services.jitsi}"
+
+      av_moderation_component = "avmoderation.${commonConfig.services.jitsi}"
+      breakout_rooms_component = "breakout.${commonConfig.services.jitsi}"
+      end_conference_component = "endconference.${commonConfig.services.jitsi}"
+
+      modules_enabled = {
+        "bosh";
+        "pubsub";
+        "ping";
+        "speakerstats";
+        "external_services";
+        "conference_duration";
+        "end_conference";
+        "muc_lobby_rooms";
+        "muc_breakout_rooms";
+        "av_moderation";
+        "room_metadata";
+      }
+    '';
+  };
 
   # ==========================================================================
   # NGINX CUSTOMIZATION

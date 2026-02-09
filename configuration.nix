@@ -30,7 +30,7 @@
 
     # Containers
     ./modules/services/containers/podman.nix
-    ./modules/services/containers/ghostfolio.nix
+    # ./modules/services/containers/ghostfolio.nix  # Temporarily disabled - placeholder secrets
     ./modules/services/containers/simplelogin.nix
   ];
 
