@@ -13,12 +13,19 @@
   ];
 
   # ==========================================================================
-  # JITSI MEET (VIDEO CONFERENCING)
+  # JITSI MEET (VIDEO CONFERENCING) WITH SECURE DOMAIN AUTHENTICATION
   # ==========================================================================
 
   services.jitsi-meet = {
     enable = true;
     hostName = commonConfig.services.jitsi;
+
+    # SECURE DOMAIN AUTHENTICATION - Only authenticated moderators can create meetings
+    # Guests can join meetings but cannot create them
+    secureDomain = {
+      enable = true;
+      # authentication = "internal_hashed";  # This is the default
+    };
 
     config = {
       # Disable P2P to always use JVB for better reliability
@@ -61,60 +68,10 @@
 
     # JVB (videobridge) configuration
     videobridge.enable = true;
+
+    # Prosody XMPP server
+    prosody.enable = true;
   };
-
-  # ==========================================================================
-  # PROSODY XMPP SERVER CONFIGURATION
-  # ==========================================================================
-
-  # The jitsi-meet module handles Prosody configuration automatically
-  # We just need to enable it
-  services.jitsi-meet.prosody.enable = true;
-
-  # Override Prosody config for secure domain
-  services.prosody.virtualHosts."${commonConfig.services.jitsi}" = lib.mkForce {
-    enabled = true;
-    domain = commonConfig.services.jitsi;
-    extraConfig = ''
-      authentication = "jitsi-anonymous"
-      c2s_require_encryption = false
-      admins = { "focus@auth.${commonConfig.services.jitsi}" }
-
-      speakerstats_component = "speakerstats.${commonConfig.services.jitsi}"
-      conference_duration_component = "conferenceduration.${commonConfig.services.jitsi}"
-
-      av_moderation_component = "avmoderation.${commonConfig.services.jitsi}"
-      breakout_rooms_component = "breakout.${commonConfig.services.jitsi}"
-      end_conference_component = "endconference.${commonConfig.services.jitsi}"
-
-      modules_enabled = {
-        "bosh";
-        "pubsub";
-        "ping";
-        "speakerstats";
-        "external_services";
-        "conference_duration";
-        "end_conference";
-        "muc_lobby_rooms";
-        "muc_breakout_rooms";
-        "av_moderation";
-        "room_metadata";
-      }
-    '';
-  };
-
-  # Force MUC component to restrict room creation to authenticated users only
-  services.prosody.muc = [{
-    domain = "conference.${commonConfig.services.jitsi}";
-    name = "Jitsi Meet MUC";
-    restrictRoomCreation = true;  # Only authenticated users can create rooms
-    extraConfig = ''
-      restrict_room_creation = true
-      muc_room_locking = false
-      muc_tombstones = true
-      muc_room_default_public = true
-    '';
-  }];
 
   # ==========================================================================
   # NGINX CUSTOMIZATION
