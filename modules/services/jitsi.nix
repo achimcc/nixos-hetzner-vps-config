@@ -103,6 +103,19 @@
     '';
   };
 
+  # Force MUC component to restrict room creation to authenticated users only
+  services.prosody.muc = [{
+    domain = "conference.${commonConfig.services.jitsi}";
+    name = "Jitsi Meet MUC";
+    restrictRoomCreation = true;  # Only authenticated users can create rooms
+    extraConfig = ''
+      restrict_room_creation = true
+      muc_room_locking = false
+      muc_tombstones = true
+      muc_room_default_public = true
+    '';
+  }];
+
   # ==========================================================================
   # NGINX CUSTOMIZATION
   # ==========================================================================
