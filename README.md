@@ -10,6 +10,7 @@ Hardened, modular NixOS flake configuration for self-hosted services on a Hetzne
 - **Ghostfolio** - Privacy-focused wealth management (Podman container)
 - **SimpleLogin** - Email aliasing and privacy protection (Podman container)
 - **Syncthing Relay** - Public relay server for Syncthing file synchronization
+- **Jitsi Meet** - Self-hosted video conferencing with secure domain authentication
 - **Veilid** - Privacy-focused distributed network node
 - **Postfix** - Mail server for service notifications
 - **NGINX** - Reverse proxy with Let's Encrypt TLS and modular vhost configuration
@@ -27,6 +28,7 @@ Hardened, modular NixOS flake configuration for self-hosted services on a Hetzne
 | PrivateBin | privatebin.rusty-vault.de | Encrypted Pastebin |
 | Ghostfolio | ghostfolio.rusty-vault.de | Wealth Management (Podman) |
 | SimpleLogin | simplelogin.rusty-vault.de | Email Aliasing (Podman) |
+| Jitsi Meet | jitsi.rusty-vault.de | Video Conferencing |
 | Syncthing Relay | 22067 | Relay server for Syncthing clients |
 | Syncthing Status | rusty-vault.de/relay-status | Relay status API |
 | Veilid | 5150/TCP, 5150/UDP | Privacy Network Node |
@@ -38,7 +40,7 @@ Hardened, modular NixOS flake configuration for self-hosted services on a Hetzne
 
 - Hetzner VPS running NixOS
 - Domain with DNS pointing to server IP (rusty-vault.de)
-- Subdomains for services (miniflux, ghostfolio, privatebin, simplelogin, mail)
+- Subdomains for services (miniflux, ghostfolio, privatebin, simplelogin, jitsi, mail)
 - Local tools: `nix` (with flakes enabled), `sops`, `age`
 
 ## Structure
@@ -68,6 +70,7 @@ Hardened, modular NixOS flake configuration for self-hosted services on a Hetzne
 │       ├── miniflux.nix
 │       ├── privatebin.nix
 │       ├── syncthing-relay.nix
+│       ├── jitsi.nix
 │       ├── veilid.nix
 │       ├── mail/
 │       │   └── postfix.nix
@@ -115,6 +118,7 @@ commonConfig = {
   services = {
     vaultwarden = "rusty-vault.de";
     ghostfolio = "ghostfolio.rusty-vault.de";
+    jitsi = "jitsi.rusty-vault.de";
     # ... etc
   };
 };
@@ -269,7 +273,7 @@ ssh root@<server> "cd /etc/nixos && nixos-rebuild switch --flake .#nixos-server"
 
 ### Firewall
 
-- Only ports 22, 80, 443 open
+- Only ports 22, 80, 443, 10000/UDP (Jitsi JVB) open
 - SYN flood protection
 - ICMP rate limiting
 - Logging for refused connections
@@ -346,6 +350,20 @@ Email aliasing service for privacy protection (runs in Podman container).
 - **Container**: simplelogin/app:latest
 - **Features**: Unlimited aliases, PGP encryption, custom domains
 
+### Jitsi Meet (Video Conferencing)
+
+Self-hosted video conferencing with secure domain authentication.
+
+- **Domain**: jitsi.rusty-vault.de
+- **Components**: Prosody (XMPP), Jicofo (conference focus), JVB (videobridge)
+- **Authentication**: Secure domain - only authenticated moderators can create meetings, guests can join
+- **Features**: Prejoin page, display name required, no P2P (always uses JVB)
+
+Moderator accounts are managed via Prosody:
+```bash
+ssh root@<server> "prosodyctl register <username> jitsi.rusty-vault.de <password>"
+```
+
 ### Veilid (Privacy Network)
 
 Privacy-focused distributed network node.
@@ -407,6 +425,9 @@ journalctl -u miniflux -f
 journalctl -u privatebin -f
 journalctl -u syncthing-relay -f
 journalctl -u veilid -f
+journalctl -u jitsi-videobridge2 -f
+journalctl -u jicofo -f
+journalctl -u prosody -f
 
 # Containers
 ssh root@<server> "podman logs -f ghostfolio"
@@ -521,6 +542,7 @@ Important data:
 - `/var/lib/privatebin/` - PrivateBin data
 - `/var/lib/ghostfolio/` - Ghostfolio database (Podman volume)
 - `/var/lib/simplelogin/` - SimpleLogin data (Podman volumes)
+- `/var/lib/prosody/` - Jitsi Prosody data (moderator accounts)
 - `/var/lib/sops-nix/key.txt` - Age private key
 - `/etc/secrets/initrd/` - LUKS unlock SSH keys
 
@@ -532,6 +554,7 @@ ssh root@<server> "tar -czf /tmp/backup.tar.gz \
   /var/lib/privatebin \
   /var/lib/ghostfolio \
   /var/lib/simplelogin \
+  /var/lib/prosody \
   /var/lib/sops-nix/key.txt"
 scp root@<server>:/tmp/backup.tar.gz ./
 ```

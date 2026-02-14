@@ -20,11 +20,11 @@
       mode = "0400";
     };
 
-    # Ghostfolio Environment Variables (temporarily disabled - placeholder secrets)
-    # secrets.ghostfolio_env = {
-    #   sopsFile = ../secrets/ghostfolio.yaml;
-    #   mode = "0400";
-    # };
+    # Ghostfolio Environment Variables
+    secrets.ghostfolio_env = {
+      sopsFile = ../secrets/ghostfolio.yaml;
+      mode = "0400";
+    };
 
     # SimpleLogin Secrets
     secrets.simplelogin_db_password = {
