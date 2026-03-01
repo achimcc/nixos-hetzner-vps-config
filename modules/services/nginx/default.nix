@@ -12,6 +12,9 @@
     recommendedProxySettings = true;
     recommendedTlsSettings = true;
 
+    # Increase hash bucket size for long server names (rmfakecloud domains)
+    serverNamesHashBucketSize = 128;
+
     # Global security settings
     appendHttpConfig = ''
       # Rate Limiting Zones

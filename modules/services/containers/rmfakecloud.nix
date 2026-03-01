@@ -23,10 +23,12 @@ in
   # RMFAKECLOUD (PODMAN CONTAINER)
   # ============================================================================
 
-  # Persistent data directory
+  # Persistent data directory and certificate permissions for nginx
   systemd.tmpfiles.rules = [
     "d /var/lib/rmfakecloud 0750 root root -"
     "d /var/lib/rmfakecloud/data 0750 root root -"
+    "z ${certDir}/server.key 0640 root nginx -"
+    "z ${certDir}/server.crt 0644 root nginx -"
   ];
 
   # OCI Container
