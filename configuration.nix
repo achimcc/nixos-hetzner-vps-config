@@ -32,6 +32,7 @@
     ./modules/services/containers/podman.nix
     ./modules/services/containers/ghostfolio.nix
     ./modules/services/containers/simplelogin.nix
+    ./modules/services/containers/rmfakecloud.nix
   ];
 
   # Host-specific settings

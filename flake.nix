@@ -26,6 +26,7 @@
           simplelogin = "simplelogin.rusty-vault.de";
           mail = "mail.rusty-vault.de";
           jitsi = "jitsi.rusty-vault.de";
+          remarkable = "remarkable.rusty-vault.de";
         };
         emailDomain = "sl.rusty-vault.de";
       };

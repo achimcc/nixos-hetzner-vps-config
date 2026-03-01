@@ -65,5 +65,11 @@
       owner = "prosody";
       group = "prosody";
     };
+
+    # rmfakecloud JWT Secret
+    secrets.rmfakecloud_jwt_secret = {
+      sopsFile = ../secrets/rmfakecloud.yaml;
+      mode = "0400";
+    };
   };
 }
