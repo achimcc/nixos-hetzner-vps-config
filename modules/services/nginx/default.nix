@@ -21,10 +21,10 @@
     # ihre Verbindungen ueber den stream-Layer von aussen oder ueber
     # 10.77.0.2:8443 (proxy-01 via wg-vps) weitergeleitet.
     defaultListen = [
-      { addr = "0.0.0.0"; port = 8443; ssl = true; extraParameters = [ "proxy_protocol" ]; }
-      { addr = "[::]";    port = 8443; ssl = true; extraParameters = [ "proxy_protocol" ]; }
-      { addr = "0.0.0.0"; port = 80; }
-      { addr = "[::]";    port = 80; }
+      { addr = "0.0.0.0"; port = 8443; ssl = true;  extraParameters = [ "proxy_protocol" ]; }
+      { addr = "[::]";    port = 8443; ssl = true;  extraParameters = [ "proxy_protocol" ]; }
+      { addr = "0.0.0.0"; port = 80;   ssl = false; }
+      { addr = "[::]";    port = 80;   ssl = false; }
     ];
 
     # Global security settings + PROXY-Protocol real-IP trust (nur von localhost).
