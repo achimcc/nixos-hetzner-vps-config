@@ -27,6 +27,7 @@
     ./modules/services/jitsi.nix
     ./modules/services/mail/postfix.nix
     ./modules/services/monitoring/fail2ban.nix
+    ./modules/services/wireguard-reverse-tunnel.nix
 
     # Containers
     ./modules/services/containers/podman.nix

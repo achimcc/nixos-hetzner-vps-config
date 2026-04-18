@@ -71,5 +71,10 @@
       sopsFile = ../secrets/rmfakecloud.yaml;
       mode = "0400";
     };
+
+    # WireGuard-Reverse-Tunnel zu proxy-01 (Homeserver)
+    secrets.wg_reverse_tunnel_private_key = {
+      mode = "0400";
+    };
   };
 }
