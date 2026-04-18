@@ -70,7 +70,11 @@
 
           # Configuration
           SERVER="''${NRS_SERVER:-root@${commonConfig.domain}}"
-          FLAKE_DIR="$(cd "$(dirname "''${BASH_SOURCE[0]}")/../.." && pwd)"
+          FLAKE_DIR="''${NRS_FLAKE_DIR:-$PWD}"
+          if [[ ! -f "$FLAKE_DIR/flake.nix" ]]; then
+            echo -e "''${RED}❌ No flake.nix in $FLAKE_DIR — run nrs from the flake directory or set NRS_FLAKE_DIR''${NC}"
+            exit 1
+          fi
           HOSTNAME="''${NRS_HOSTNAME:-nixos-server}"
 
           echo -e "''${BLUE}╔════════════════════════════════════════════════════════════╗''${NC}"
