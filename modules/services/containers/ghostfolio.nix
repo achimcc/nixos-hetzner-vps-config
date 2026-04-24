@@ -36,6 +36,8 @@
         "--cap-add=FOWNER"
         "--cap-add=CHOWN"
         "--security-opt=no-new-privileges:true"
+        "--memory=512m"
+        "--pids-limit=256"
         "--health-cmd=pg_isready -U ghostfolio"
         "--health-interval=10s"
         "--health-timeout=5s"
@@ -52,6 +54,8 @@
         "--cap-add=SETGID"
         "--cap-add=SETUID"
         "--security-opt=no-new-privileges:true"
+        "--memory=256m"
+        "--pids-limit=128"
         "--health-cmd=redis-cli ping"
         "--health-interval=10s"
         "--health-timeout=5s"
@@ -71,6 +75,8 @@
         "--cap-add=SETGID"
         "--cap-add=SETUID"
         "--security-opt=no-new-privileges:true"
+        "--memory=1g"
+        "--pids-limit=512"
       ];
     };
   };

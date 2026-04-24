@@ -59,6 +59,8 @@
         "--cap-add=FOWNER"
         "--cap-add=CHOWN"
         "--security-opt=no-new-privileges:true"
+        "--memory=512m"
+        "--pids-limit=256"
         "--health-cmd=pg_isready -U simplelogin"
         "--health-interval=10s"
         "--health-timeout=5s"
@@ -81,6 +83,8 @@
         "--cap-add=SETGID"
         "--cap-add=SETUID"
         "--security-opt=no-new-privileges:true"
+        "--memory=256m"
+        "--pids-limit=128"
         "--health-cmd=redis-cli ping"
         "--health-interval=10s"
         "--health-timeout=5s"
@@ -132,8 +136,8 @@
         # Word list for random alias suffixes
         WORDS_FILE_PATH = "/code/local_data/words.txt";
 
-        # DNS nameservers
-        NAMESERVERS = "8.8.8.8,1.1.1.1";
+        # DNS nameservers (Quad9, konsistent zur Host-DoT-Policy)
+        NAMESERVERS = "9.9.9.9,149.112.112.112";
 
         # Flask configuration
         FLASK_SECRET = "/run/secrets/simplelogin_flask_secret";
@@ -161,8 +165,9 @@
         "--network=simplelogin-net"
         "--add-host=host.containers.internal:host-gateway"
         "--cap-drop=ALL"
-        "--cap-add=NET_BIND_SERVICE"
         "--security-opt=no-new-privileges:true"
+        "--memory=1g"
+        "--pids-limit=512"
       ];
 
       dependsOn = [

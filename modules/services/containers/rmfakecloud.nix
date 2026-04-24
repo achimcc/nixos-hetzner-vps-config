@@ -48,6 +48,8 @@ in
       "--cap-add=SETGID"
       "--cap-add=SETUID"
       "--security-opt=no-new-privileges:true"
+      "--memory=512m"
+      "--pids-limit=256"
     ];
   };
 
@@ -66,7 +68,7 @@ in
       extraConfig = ''
         ${customLib.nginxRateLimiting}
         ${customLib.nginxSecurityHeaders}
-        client_max_body_size 1G;
+        client_max_body_size 200M;
       '';
 
       locations."/" = {
@@ -93,7 +95,7 @@ in
       sslCertificateKey = config.sops.secrets."rmfakecloud-ca/server.key".path;
 
       extraConfig = ''
-        client_max_body_size 1G;
+        client_max_body_size 200M;
         proxy_read_timeout 10800;
         proxy_send_timeout 10800;
       '';
