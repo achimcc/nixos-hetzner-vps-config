@@ -24,7 +24,7 @@
   virtualisation.oci-containers.containers = {
     # PostgreSQL Database
     ghostfolio-postgres = {
-      image = "docker.io/library/postgres:15-alpine";
+      image = "docker.io/library/postgres:15-alpine@sha256:d326a0ce8bce59394a11fe4fedbf619611a3957dff4692b440646b75ea2e4498";
       environmentFiles = [ config.sops.secrets.ghostfolio_env.path ];
       volumes = [ "ghostfolio-pgdata:/var/lib/postgresql/data" ];
       extraOptions = [
@@ -45,7 +45,7 @@
 
     # Redis Cache
     ghostfolio-redis = {
-      image = "docker.io/library/redis:alpine";
+      image = "docker.io/library/redis:alpine@sha256:0804c395e634e624243387d3c3a9c45fcaca876d313c2c8b52c3fdf9a912dded";
       extraOptions = [
         "--network=ghostfolio-net"
         "--cap-drop=ALL"
@@ -61,7 +61,7 @@
 
     # Ghostfolio Application
     ghostfolio = {
-      image = "docker.io/ghostfolio/ghostfolio:latest";
+      image = "docker.io/ghostfolio/ghostfolio:latest@sha256:376df9280cf29938a5996b8eaddd42edf95c69a3661b4ef7ea12c7deb078777b";
       ports = [ "127.0.0.1:3333:3333" ];
       environmentFiles = [ config.sops.secrets.ghostfolio_env.path ];
       dependsOn = [ "ghostfolio-postgres" "ghostfolio-redis" ];

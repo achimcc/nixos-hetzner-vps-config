@@ -28,7 +28,7 @@ in
 
   # OCI Container
   virtualisation.oci-containers.containers.rmfakecloud = {
-    image = "docker.io/ddvk/rmfakecloud:latest";
+    image = "docker.io/ddvk/rmfakecloud:latest@sha256:eec035801164a03c4e60cfad7a3d59ecb21ddd0a6598d2ea76078c7e438da84e";
     ports = [ "127.0.0.1:${rmfakecloudPort}:3000" ];
     volumes = [
       "/var/lib/rmfakecloud/data:/data"

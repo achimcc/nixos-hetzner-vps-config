@@ -34,7 +34,7 @@
   virtualisation.oci-containers.containers = {
     # PostgreSQL Database
     simplelogin-postgres = {
-      image = "docker.io/library/postgres:15-alpine";
+      image = "docker.io/library/postgres:15-alpine@sha256:d326a0ce8bce59394a11fe4fedbf619611a3957dff4692b440646b75ea2e4498";
       autoStart = true;
 
       environment = {
@@ -68,7 +68,7 @@
 
     # Redis Cache
     simplelogin-redis = {
-      image = "docker.io/library/redis:7-alpine";
+      image = "docker.io/library/redis:7-alpine@sha256:02f2cc4882f8bf87c79a220ac958f58c700bdec0dfb9b9ea61b62fb0e8f1bfcf";
       autoStart = true;
 
       volumes = [
@@ -90,7 +90,7 @@
 
     # SimpleLogin Application
     simplelogin-app = {
-      image = "docker.io/simplelogin/app:latest";
+      image = "docker.io/simplelogin/app:latest@sha256:21039954655a708ddd36083bc5cdea51fc2ccbc44ede3fccfae8ddf496e0b21f";
       autoStart = true;
 
       # Run both web server and email handler
