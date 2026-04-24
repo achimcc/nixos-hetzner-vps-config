@@ -26,3 +26,7 @@ result-*
 
 # Git worktrees
 .worktrees/
+
+# Plain-Private-Keys und Self-Signed CA-Material nie ins git
+# (verwaltet via sops-nix, siehe secrets/rmfakecloud-ca.yaml)
+secrets/rmfakecloud-ca/
