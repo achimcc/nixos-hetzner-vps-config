@@ -28,14 +28,14 @@
       # SMTP Settings
       smtpd_banner = "$myhostname ESMTP";
 
-      # TLS for incoming connections
+      # TLS for incoming connections (opportunistic — kompatibel zu Legacy-Sendern)
       smtpd_tls_cert_file = "/var/lib/acme/${commonConfig.services.mail}/cert.pem";
       smtpd_tls_key_file = "/var/lib/acme/${commonConfig.services.mail}/key.pem";
-      smtpd_use_tls = "yes";
       smtpd_tls_security_level = "may";
 
-      # TLS for outgoing connections
-      smtp_tls_security_level = "may";
+      # TLS for outgoing relay connections (Brevo — verpflichtend verschluesselt)
+      smtp_tls_security_level = "encrypt";
+      smtp_tls_CAfile = "/etc/ssl/certs/ca-bundle.crt";
       smtp_tls_loglevel = "1";
 
       # SASL Authentication for relay (Brevo SMTP on port 587)
@@ -44,8 +44,6 @@
       smtp_sasl_password_maps = "hash:/var/lib/postfix/sasl_passwd";
       smtp_sasl_security_options = "noanonymous";
       smtp_sasl_tls_security_options = "noanonymous";
-      smtp_tls_wrappermode = "no";
-      smtp_use_tls = "yes";
 
       # Message size limit (25MB)
       message_size_limit = 26214400;
