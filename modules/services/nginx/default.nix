@@ -48,7 +48,7 @@
     # mit der Original-Client-IP.
     streamConfig = ''
       map $ssl_preread_server_name $upstream {
-        ~^(auth|cloud|files|grafana|jellyfin|seerr|status|vault)\.rusty-vault\.de$  home_ingress;
+        ~^(auth|cloud|files|grafana|jellyfin|seerr|stats|status|vault)\.rusty-vault\.de$  home_ingress;
         default                                                                      local_ingress;
       }
 
