@@ -39,7 +39,7 @@
       smtp_tls_loglevel = "1";
 
       # SASL Authentication for relay (Brevo SMTP on port 587)
-      relayhost = [ "smtp-relay.brevo.com:587" ];
+      relayhost = [ "[smtp-relay.brevo.com]:587" ];
       smtp_sasl_auth_enable = "yes";
       smtp_sasl_password_maps = "hash:/var/lib/postfix/sasl_passwd";
       smtp_sasl_security_options = "noanonymous";
