@@ -14,21 +14,16 @@ let
     "webapp-prod.cloud.remarkable.engineering"
     "eu.tectonic.remarkable.com"
   ];
-
-  # Path to self-signed CA certs on the server (deployed via rsync)
-  certDir = "/etc/nixos/secrets/rmfakecloud-ca";
 in
 {
   # ============================================================================
   # RMFAKECLOUD (PODMAN CONTAINER)
   # ============================================================================
 
-  # Persistent data directory and certificate permissions for nginx
+  # Persistent data directory (Cert-Permissions managed by sops-nix)
   systemd.tmpfiles.rules = [
     "d /var/lib/rmfakecloud 0750 root root -"
     "d /var/lib/rmfakecloud/data 0750 root root -"
-    "z ${certDir}/server.key 0640 root nginx -"
-    "z ${certDir}/server.crt 0644 root nginx -"
   ];
 
   # OCI Container
@@ -94,8 +89,8 @@ in
       serverAliases = builtins.tail remarkableDomains;
 
       addSSL = true;
-      sslCertificate = "${certDir}/server.crt";
-      sslCertificateKey = "${certDir}/server.key";
+      sslCertificate    = config.sops.secrets."rmfakecloud-ca/server.crt".path;
+      sslCertificateKey = config.sops.secrets."rmfakecloud-ca/server.key".path;
 
       extraConfig = ''
         client_max_body_size 1G;
