@@ -55,10 +55,14 @@
   ];
 
   # --- Automatic Security Updates ---
+  # Woechentlicher Upgrade + Reboot (Sonntag 04:00-06:00). So greifen
+  # Kernel-/initrd-Updates ohne Handbetrieb — ohne Reboot laufen neue Kernel
+  # nicht, Security-Fixes sind wirkungslos.
   system.autoUpgrade = {
     enable = true;
-    allowReboot = false;  # Manual reboot after updates
-    dates = "04:00";
+    allowReboot = true;
+    dates = "Sun 04:00";
+    rebootWindow = { lower = "04:00"; upper = "06:00"; };
     randomizedDelaySec = "30min";
   };
 
