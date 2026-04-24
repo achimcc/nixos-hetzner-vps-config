@@ -5,11 +5,15 @@
   # NGINX HELPERS
   # ============================================================================
 
-  # Reusable security headers for all NGINX vhosts
+  # Reusable security headers for all NGINX vhosts.
+  # X-XSS-Protection absichtlich weggelassen — in modernen Browsern no-op
+  # (Chrome entfernt, Firefox ignoriert seit Jahren), wird durch CSP ersetzt.
+  # CSP wird NICHT blanket gesetzt, weil Vaultwarden, Ghostfolio, PrivateBin,
+  # SimpleLogin eigene CSP-Header liefern — override waere schaedlich. Falls
+  # ein vhost keine eigene CSP hat, vhost-lokal ergaenzen.
   nginxSecurityHeaders = ''
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
-    add_header X-XSS-Protection "1; mode=block" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()" always;
     add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
