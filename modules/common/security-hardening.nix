@@ -109,15 +109,21 @@
   systemd.coredump.enable = false;
 
   # --- DNS-over-TLS with systemd-resolved ---
+  # Strict DoT: saemtliche Queries ueber Quad9 (DoT-faehig). `Domains = "~."`
+  # ist ein catch-all und sorgt dafuer, dass die via Hetzner-DHCP gepushten
+  # plain-DNS-Resolver (185.12.64.x, kein DoT) nicht benutzt werden.
+  # Fallback auf Cloudflare (ebenfalls DoT).
   services.resolved = {
     enable = true;
     settings = {
       Resolve = {
         DNSSEC = "allow-downgrade";
-        DNSOverTLS = "opportunistic";
+        DNSOverTLS = "yes";
+        DNS = "9.9.9.9#dns.quad9.net 149.112.112.112#dns.quad9.net";
+        Domains = "~.";
         FallbackDNS = [
-          "9.9.9.9#dns.quad9.net"
-          "149.112.112.112#dns.quad9.net"
+          "1.1.1.1#cloudflare-dns.com"
+          "1.0.0.1#cloudflare-dns.com"
         ];
       };
     };
