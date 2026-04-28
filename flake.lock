@@ -660,15 +660,16 @@
       "locked": {
         "lastModified": 1777397452,
         "narHash": "sha256-glmANMlej9Ft8vwEgnBrl5lLPkNU7p0xV9ZYLy1rtMk=",
-        "ref": "refs/heads/main",
+        "ref": "main",
         "rev": "cc02d24ac4a44961038e695fe129c995c150eddc",
         "revCount": 700,
         "type": "git",
-        "url": "file:///home/achim/Projects/proxmox"
+        "url": "ssh://git@github.com/achimcc/proxmox.git"
       },
       "original": {
+        "ref": "main",
         "type": "git",
-        "url": "file:///home/achim/Projects/proxmox"
+        "url": "ssh://git@github.com/achimcc/proxmox.git"
       }
     },
     "proxmox-nixos": {
