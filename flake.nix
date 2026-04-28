@@ -8,6 +8,15 @@
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    proxmox = {
+      url   = "git+file:///home/achim/Projects/proxmox";
+      flake = true;
+      # KEIN `inputs.nixpkgs.follows = "nixpkgs"`: proxmox-Module hängen an
+      # eigenen Versionen (proxmox-nixos, authentik-nix). Wir konsumieren nur
+      # `lib.ddnsServices` als reine Liste — die kompletten Eval-Trees werden
+      # nicht angefasst.
+    };
   };
 
   outputs = { self, nixpkgs, sops-nix, ... }@inputs:
