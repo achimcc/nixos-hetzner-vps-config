@@ -1,4 +1,4 @@
-{ config, pkgs, lib, commonConfig, customLib, ... }:
+{ config, pkgs, lib, commonConfig, customLib, inputs, ... }:
 
 {
   # ============================================================================
@@ -46,9 +46,18 @@
     # ueber den WG-Tunnel an proxy-01 durchgereicht, alles andere an den lokalen
     # nginx-http-Block auf :8443. Jeder Pfad bekommt einen PROXY-Protocol-Header
     # mit der Original-Client-IP.
-    streamConfig = ''
+    #
+    # Die SNI-Liste kommt aus inputs.proxmox.lib.ddnsServices (SSoT in
+    # proxmox-Repo:modules/dns-records.nix). Beim Hinzufügen eines neuen
+    # Heim-Service: dort `dns.ddns.services` erweitern, hier `nix flake update
+    # proxmox` und re-deploy — keine manuelle Synchronisation mehr.
+    streamConfig =
+      let
+        homeSnis     = inputs.proxmox.lib.ddnsServices;
+        homeSniRegex = "~^(${lib.concatStringsSep "|" homeSnis})\\.rusty-vault\\.de$";
+      in ''
       map $ssl_preread_server_name $upstream {
-        ~^(auth|cloud|files|grafana|jellyfin|seerr|stats|status|vault)\.rusty-vault\.de$  home_ingress;
+        ${homeSniRegex}  home_ingress;
         default                                                                      local_ingress;
       }
 
