@@ -13,6 +13,7 @@
     ./modules/common/base-packages.nix
     ./modules/common/ssh.nix
     ./modules/common/firewall.nix
+    ./modules/common/proxmox-flake-deploy-key.nix
 
     # Secrets
     ./modules/secrets.nix

@@ -77,6 +77,16 @@
       mode = "0400";
     };
 
+    # SSH deploy-key für read-only Pull aus achimcc/proxmox-Repo (private).
+    # Konsumiert von flake-input proxmox; SSH-config in modules/common/proxmox-flake-deploy-key.nix
+    # mappt github.com → IdentityFile=/run/secrets/proxmox_readonly_key.
+    secrets.proxmox_readonly_key = {
+      sopsFile = ../secrets/proxmox-readonly.yaml;
+      mode = "0600";
+      owner = "root";
+      group = "root";
+    };
+
     # rmfakecloud Self-Signed CA + Server-Cert
     # Werte sind base64-encoded (siehe secrets/rmfakecloud-ca.yaml) — sops-nix
     # schreibt den encodeten Rohinhalt; ein activationScript unten dekodiert

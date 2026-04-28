@@ -10,12 +10,15 @@
     };
 
     proxmox = {
-      url   = "git+file:///home/achim/Projects/proxmox";
+      url   = "git+ssh://git@github.com/achimcc/proxmox.git?ref=main";
       flake = true;
       # KEIN `inputs.nixpkgs.follows = "nixpkgs"`: proxmox-Module hängen an
       # eigenen Versionen (proxmox-nixos, authentik-nix). Wir konsumieren nur
       # `lib.ddnsServices` als reine Liste — die kompletten Eval-Trees werden
       # nicht angefasst.
+      #
+      # Auth: VPS nutzt SSH-deploy-key aus sops (proxmox_readonly_key);
+      # Workstation nutzt den FIDO2-key. Siehe modules/common/proxmox-flake-deploy-key.nix.
     };
   };
 
